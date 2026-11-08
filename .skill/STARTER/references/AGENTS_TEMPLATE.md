@@ -29,6 +29,14 @@
 - 验证：任务开始前先确认连接（`get_addon_status`、`get_scene_info`），再读取当前文件与对象列表。
 - 约束：同时只运行一个 MCP 服务实例；socket 无鉴权，仅限 localhost。
 
+# WORKSPACE
+
+- `scenes/`：所有 `.blend` 场景的读写目录，改动后另存为新文件，不覆盖已有文件。
+- `previews/`：视窗预览截图，用于快速确认形态与比例。
+- `render/`：最终渲染成图，用于交付确认。
+- `.screenshots/`：工具自动截图，仅本地保留。
+- `.skill/STARTER/assets/`：参照资产原件（`ref_human.blend`、`je_gray_02_1k.exr`），首次使用时复制到项目根目录。
+
 ---
 
 ## 填写对照

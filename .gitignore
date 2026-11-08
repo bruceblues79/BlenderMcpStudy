@@ -11,6 +11,7 @@
 # 产出目录
 scenes/
 previews/
+render/
 .screenshots/
 
 # 系统文件

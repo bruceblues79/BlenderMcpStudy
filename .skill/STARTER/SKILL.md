@@ -1,6 +1,6 @@
 ---
 name: "STARTER"
-description: "为 Blender MCP 新项目生成 AGENTS.md 的向导：确认 MCP 连接后按默认值逐项提问（四边面、1.8m 人形、EEVEE、白模或 Poly Haven 贴图、命名等），保留 MUST DO 原文并产出项目级 AGENTS.md。当用户新建 Blender 项目、配置 AGENTS.md 或接入 mcp-for-blender 时调用。"
+description: "为 Blender MCP 新项目生成 AGENTS.md 的向导：确认连接后按默认值逐项提问（四边面、比例参照、渲染、白模或贴图、命名等），生成项目级 AGENTS.md，并向不熟悉美术的用户回执一段建模协作流程建议。当用户新建 Blender 项目、配置 AGENTS.md、接入 mcp-for-blender，或问「我不懂建模该怎么跟你说」时调用。"
 ---
 
 # STARTER — Blender MCP 项目向导
@@ -10,15 +10,16 @@ description: "为 Blender MCP 新项目生成 AGENTS.md 的向导：确认 MCP �
 - 新建或初始化一个 Blender MCP 项目
 - 需要为新项目编写或修改 `AGENTS.md`
 - 需要接入、验证或排查 `mcp-for-blender`
+- 用户不懂美术，不知道该怎么描述需求
 
-## 第一步：铺底资产与环境
+## 第一步：环境就绪
 
 1. 建立 `scenes/`、`previews/`、`render/` 三个目录；环境光与参照资产直接引用 `.skill/STARTER/assets/` 下的原件，不复制到项目根目录
 2. 读 `references/MCP_SETUP.md`
-3. 调 `get_addon_status` 确认 addon 在线；Blender 未运行时，按 MCP_SETUP 的「由 Agent 启动 Blender」自行拉起，再验证
+3. 调 `get_addon_status` 确认 addon 在线；Blender 未运行时先探测可执行文件位置再自行拉起，然后重新验证
 4. 调 `get_scene_info` 确认当前文件与对象列表
 
-连接失败时按 MCP_SETUP 的故障表处理，不要跳过直接开工。
+连接不上时先问用户，不要靠猜配置硬试。
 
 ## 第二步：向导提问
 
@@ -44,7 +45,18 @@ description: "为 Blender MCP 新项目生成 AGENTS.md 的向导：确认 MCP �
 
 比例参照与缩放比必须联动，且只写一种口径：1:1 时参照物保持 `1.8` 米；1:10 时写 `0.18` 米。不要同时写真实尺寸和折算尺寸。
 
-## 第三步：风格来源
+## 第三步：工作流回执
+
+问卷结束后，用几句话把推荐做法讲给用户，让他知道接下来会发生什么。**这是推荐，不是流程卡点**：用户想换顺序、先做局部、跳过某一步，直接照办，不要拿这套去纠正用户。
+
+说清这四点：
+
+1. **你只需要说想法，不用懂美术。** 一句话、一张参考图、"大概这么高"都算有效输入；造型、布线、破损由 agent 负责翻译成几何。
+2. **推荐节奏**：需求翻译（物体清单 + 场地范围 + 观察距离）→ 比例定锚（先放人形参照和场地边界）→ 白模分块（单件物体拆成主体、附属、装饰，各自独立对象与合集，先粗后细）→ 视窗校验（每轮给一张 24mm 视窗截图，用户只说"大了/小了/太密"即可）→ 破损与风格 → 渲染交付。
+3. **白模先行**：先不贴材质，确认形态与比例通过后再做材质与破损的整体调整，返工成本最低。
+4. **每轮只改一件事**，改完另存新文件，保留上一版便于回退。
+
+## 第四步：风格来源
 
 - **默认（LLM 自行发挥）**：从用户的一句话描述里归纳 3–5 个风格关键词，直接写入 `风格` 字段，不再追问细节。
 - **参考图**：先输出解读结果并让用户确认，确认后才写入 STYLE 段。固定输出五项：
@@ -56,12 +68,12 @@ description: "为 Blender MCP 新项目生成 AGENTS.md 的向导：确认 MCP �
 
 不要在图上看不出来的地方补细节。
 
-## 第四步：材质
+## 第五步：材质
 
 - **白模（默认）**：只写默认 pbr 素模，颜色默认，粗糙度与金属度可调，不创建任何贴图。
 - **Poly Haven**：白模验证通过后，用 `search_assets` 检索 Poly Haven 资产、`import_asset` 导入并上贴图。AGENTS.md 中必须写明"先白模验证，再上贴图"的先后顺序。
 
-## 第五步：生成 AGENTS.md
+## 第六步：生成 AGENTS.md
 
 - `MUST DO FIRST` 一字不改，置于文件最前
 - 其余段落按 `references/AGENTS_TEMPLATE.md` 填充
@@ -70,7 +82,7 @@ description: "为 Blender MCP 新项目生成 AGENTS.md 的向导：确认 MCP �
 - 选"不设"的可选项整行省略，不要输出"不设"
 - 已存在 `AGENTS.md` 时先备份为 `AGENTS.md.bak`，不直接覆盖
 
-## 第六步：自检
+## 第七步：自检
 
 生成后完整读一遍 `AGENTS.md`，逐项核对，发现问题当场修正：
 
@@ -80,7 +92,7 @@ description: "为 Blender MCP 新项目生成 AGENTS.md 的向导：确认 MCP �
 4. 规则之间不冲突，重点看比例参照与缩放比、倒角策略与风格
 5. `MUST DO FIRST` 与原文逐字一致
 
-## 第七步：交付
+## 第八步：交付
 
 汇报三件事：
 

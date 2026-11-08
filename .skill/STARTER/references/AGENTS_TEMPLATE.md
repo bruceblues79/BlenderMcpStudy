@@ -23,11 +23,9 @@
 
 # SETUP
 
-- 依赖：Blender 5.2 LTS+、uv、`mcp-for-blender`（原 `blender-mcp`）：https://github.com/ahujasid/mcp-for-blender 。
-- 安装：`uvx mcp-for-blender setup` 自动配置客户端与 addon；手动为 `uvx mcp-for-blender install-addon`，再到 `Edit → Preferences → Add-ons` 启用 `Interface: MCP for Blender`。
-- 连接：开启 Blender 后 addon 自动启动 socket 服务，默认 `localhost:9876`；N 面板 → `MCP for Blender` → `Start MCP Server` 可手动启动。
-- 验证：任务开始前先确认连接（`get_addon_status`、`get_scene_info`），再读取当前文件与对象列表。
-- 约束：同时只运行一个 MCP 服务实例；socket 无鉴权，仅限 localhost。
+- 这是建议，不是硬性约定：工具链用 Blender + uv + `mcp-for-blender` 最省事，装法参考 https://github.com/ahujasid/mcp-for-blender 。
+- 开工前先自检能不能连上（`get_addon_status`、`get_scene_info`）；连不上先问用户，不要自己猜配置。
+- 每台机器的安装位置、端口、客户端配置由用户掌握，不写入本文件。
 
 # WORKSPACE
 

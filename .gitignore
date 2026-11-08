@@ -1,0 +1,11 @@
+# Blender 备份文件
+*.blend1
+*.blend2
+
+# 预览图与截图
+*preview*.png
+.screenshots/
+
+# 系统文件
+Thumbs.db
+.DS_Store

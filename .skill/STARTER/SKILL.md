@@ -32,7 +32,7 @@ description: "为 Blender MCP 新项目生成 AGENTS.md 的向导：确认连接
 | 3 | 比例参照 | 1.8m 人形（`ref_human`） | 1m 立方体 / 无 |
 | 4 | 缩放比 | 1:1 | 1:10 等 |
 | 5 | 渲染引擎 | EEVEE | Cycles |
-| 6 | 环境光 | `je_gray_02_1k.exr` | 纯色 / 无 |
+| 6 | 环境光 | `qwantani_noon_puresky_1k.exr` | 纯色 / 无 |
 | 7 | 额外灯光 | 不加 | 允许 |
 | 8 | Film 透明 | 开 | 关 |
 | 9 | 视窗焦距 | 24mm | 35mm / 50mm |

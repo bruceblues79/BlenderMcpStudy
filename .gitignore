@@ -14,6 +14,9 @@ previews/
 render/
 .screenshots/
 
+# 项目级 AGENTS.md 由技能生成，不入库
+/AGENTS.md
+
 # 系统文件
 Thumbs.db
 .DS_Store

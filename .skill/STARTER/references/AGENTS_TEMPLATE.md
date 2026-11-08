@@ -31,10 +31,10 @@
 
 # WORKSPACE
 
-- `scenes/`：所有 `.blend` 场景的读写目录，改动后另存为新文件，不覆盖已有文件。
-- `previews/`：视窗预览截图，用于快速确认形态与比例。
-- `render/`：最终渲染成图，用于交付确认。
-- `.screenshots/`：工具自动截图，仅本地保留。
+- `scenes/`：所有 `.blend` 场景的读写目录，文件读写方式与子目录管理由用户控制，git 不负责追踪管理。
+- `previews/`：视窗预览截图，用于快速确认形态与比例，git 不负责追踪管理。
+- `render/`：最终渲染成图，用于交付确认，git 不负责追踪管理。
+- `.screenshots/`：工具自动截图，仅本地保留，git 不负责追踪管理。
 - `.skill/STARTER/assets/`：参照资产原件（`ref_human.blend`、`je_gray_02_1k.exr`），场景直接引用，不复制到项目根目录。
 
 ---

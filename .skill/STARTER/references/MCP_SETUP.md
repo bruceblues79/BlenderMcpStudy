@@ -62,6 +62,21 @@ uvx mcp-for-blender install-addon
 2. 3D 视口按 `N` → `MCP for Blender` 标签 → 未运行时点 `Start MCP Server`
 3. 客户端调用 `get_addon_status`，再调用 `get_scene_info` 确认能读到场景
 
+## 由 Agent 启动 Blender（Windows）
+
+Agent 自己拉起 Blender 时，必须用脱离当前命令生命周期的方式，否则进程会在命令结束后被回收，表现为「启动后十几秒自动消失」：
+
+```powershell
+$r = Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{
+  CommandLine = '"C:\Program Files\Blender Foundation\Blender 5.2\blender.exe" "scenes\xxx.blend"'
+}
+$r.ReturnValue   # 0 = 启动成功
+```
+
+启动后等 10–20 秒，再依次确认：`Get-NetTCPConnection -LocalPort 9876`、`get_addon_status`、`get_scene_info`。
+
+不要用 `Start-Process` 启动 Blender（进程会随命令结束被回收）。`Get-Process blender` 没有输出说明进程已退出。
+
 ## 环境变量
 
 | 变量 | 默认 | 用途 |

@@ -2,8 +2,16 @@
 *.blend1
 *.blend2
 
-# 预览图与截图
-*preview*.png
+# 场景与资产不入库（由技能铺底）
+*.blend
+*.exr
+!.skill/STARTER/assets/ref_human.blend
+!.skill/STARTER/assets/je_gray_02_1k.exr
+
+# 产出目录
+scenes/
+previews/
+render/
 .screenshots/
 
 # 系统文件

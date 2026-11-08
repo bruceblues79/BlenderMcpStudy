@@ -2,6 +2,10 @@
 *.blend1
 *.blend2
 
+# 场景文件不入库（保密 + 控制体积）
+*.blend
+!.skill/STARTER/assets/ref_human.blend
+
 # 预览图与截图
 *preview*.png
 .screenshots/

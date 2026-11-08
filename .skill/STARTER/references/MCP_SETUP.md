@@ -4,7 +4,7 @@
 
 - 仓库：https://github.com/ahujasid/mcp-for-blender （原 `blender-mcp`）
 - PyPI 包：`mcp-for-blender`（原 `blender-mcp`，旧命令 `uvx blender-mcp` 仍可用）
-- 依赖：Blender 3.0+、Python 3.10+、uv
+- 依赖：Blender 5.2 LTS+、Python 3.10+、uv
 - 默认端口：`9876`
 
 ## 安装

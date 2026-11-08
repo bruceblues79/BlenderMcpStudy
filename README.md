@@ -42,7 +42,7 @@ STARTER 把这些变成一次性的向导问答，产出确定的 `AGENTS.md`。
 ├── SKILL.md                       向导主流程
 ├── assets/
 │   ├── ref_human.blend            1.8m 人形比例参照
-│   └── je_gray_02_1k.exr          中性灰环境光
+│   └── je_gray_02_1k.exr          Poly Haven 森林环境 HDRI
 └── references/
     ├── AGENTS_TEMPLATE.md         带占位符的模板与填写对照
     └── MCP_SETUP.md               安装、连接与故障排查
@@ -50,7 +50,7 @@ STARTER 把这些变成一次性的向导问答，产出确定的 `AGENTS.md`。
 
 ## 前置条件
 
-- Blender 3.0+
+- Blender 5.2 LTS+
 - uv
 - [mcp-for-blender](https://github.com/ahujasid/mcp-for-blender)（原 `blender-mcp`）
 

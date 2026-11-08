@@ -13,7 +13,7 @@ description: "为 Blender MCP 新项目生成 AGENTS.md 的向导：确认 MCP �
 
 ## 第一步：铺底资产与环境
 
-1. 建立 `scenes/`、`previews/`、`render/` 三个目录，再把 `assets/ref_human.blend` 和 `assets/je_gray_02_1k.exr` 复制到项目根目录，已存在则跳过
+1. 建立 `scenes/`、`previews/`、`render/` 三个目录；环境光与参照资产直接引用 `.skill/STARTER/assets/` 下的原件，不复制到项目根目录
 2. 读 `references/MCP_SETUP.md`
 3. 调 `get_addon_status` 确认 addon 在线
 4. 调 `get_scene_info` 确认当前文件与对象列表

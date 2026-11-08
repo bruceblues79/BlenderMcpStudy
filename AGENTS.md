@@ -6,9 +6,9 @@
 - 执行任务时，请打开blender制作。
 
 # RULES
-- 渲染方式：用`eevee`;环境`world`使用`.\je_gray_02_1k.exr`;不要加任何的灯光;`Render`设置`Film`的`Transparent`开启。
+- 渲染方式：用`eevee`;环境`world`使用`.\.skill\STARTER\assets\je_gray_02_1k.exr`;不要加任何的灯光;`Render`设置`Film`的`Transparent`开启。
 - 视窗预览：为`pico-spatial-sdk`平台制作素材，`View`的`Focal Length`使用`24mm`进行模拟。
-- 比例尺参照：Append `ref_human.blend` 中的 `ref_human` 合集到场景内，作为人形参照物。真人高 `1.8` 米，按 `1:10` 折算为场景内 `0.18` 米。
+- 比例尺参照：Append `.\.skill\STARTER\assets\ref_human.blend` 中的 `ref_human` 合集到场景内，作为人形参照物。真人高 `1.8` 米，按 `1:10` 折算为场景内 `0.18` 米。
 - 文档命名：`sanctuary_<本次修改内容>_YYMMDDHHMM.blend`。`sanctuary`为项目总名称，下划线后的字段说明该文件改了什么，末尾10位为时间纪要（年月日时分）。
 - 建模面规则：请使用四边面建模。
 
@@ -30,4 +30,4 @@
 - `previews/`：视窗预览截图，用于快速确认形态与比例。
 - `render/`：EEVEE 渲染成图，用于最终交付确认。
 - `.screenshots/`：工具自动截图，仅本地保留。
-- `.skill/STARTER/assets/`：参照资产原件（`ref_human.blend`、`je_gray_02_1k.exr`），首次使用时复制到项目根目录。
+- `.skill/STARTER/assets/`：参照资产原件（`ref_human.blend`、`je_gray_02_1k.exr`），场景直接引用，不复制到项目根目录。

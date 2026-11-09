@@ -1,6 +1,6 @@
 ---
 name: "STARTER"
-description: "为 Blender MCP 新项目生成 AGENTS.md 的向导：确认连接后按默认值逐项提问（四边面、比例参照、渲染、白模或贴图、命名等），生成项目级 AGENTS.md，并向不熟悉美术的用户回执一段建模协作流程建议。当用户新建 Blender 项目、配置 AGENTS.md、接入 mcp-for-blender，或问「我不懂建模该怎么跟你说」时调用。"
+description: "为 Blender MCP 新项目生成 AGENTS.md 的向导：确认连接后按默认值逐项提问（三角面、比例参照、渲染、白模或贴图、命名等），生成项目级 AGENTS.md，并向不熟悉美术的用户回执一段建模协作流程建议。当用户新建 Blender 项目、配置 AGENTS.md、接入 mcp-for-blender，或问「我不懂建模该怎么跟你说」时调用。"
 ---
 
 # STARTER — Blender MCP 项目向导
@@ -28,7 +28,7 @@ description: "为 Blender MCP 新项目生成 AGENTS.md 的向导：确认连接
 | # | 项目 | 默认值 | 备选 |
 |---|---|---|---|
 | 1 | 项目名 | `theme` | 自定义 |
-| 2 | 建模面 | 四边面 | 三角面 |
+| 2 | 建模面 | 三角面 | 四边面 |
 | 3 | 比例参照 | 1.8m 人形（`ref_human`） | 1m 立方体 / 无 |
 | 4 | 缩放比 | 1:1 | 1:10 等 |
 | 5 | 渲染引擎 | EEVEE | Cycles |

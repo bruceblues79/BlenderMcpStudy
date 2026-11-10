@@ -13,6 +13,11 @@ scenes/
 previews/
 render/
 .screenshots/
+docs/
+
+# Python 缓存
+__pycache__/
+*.pyc
 
 # 项目级 AGENTS.md 由技能生成，不入库
 /AGENTS.md
@@ -20,3 +25,7 @@ render/
 # 系统文件
 Thumbs.db
 .DS_Store
+
+#AGENTS文件
+.trae/
+

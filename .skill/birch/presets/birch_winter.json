@@ -1,0 +1,64 @@
+{
+  "species": "birch",
+  "seed": 20261221,
+  "height_m": 5.2,
+  "trunk": {
+    "sides": 5,
+    "segments": 7,
+    "base_radius": 0.098,
+    "top_radius": 0.010,
+    "lean_deg": 3.4,
+    "bend": 0.42
+  },
+  "branch": {
+    "start": 0.34,
+    "end": 0.98,
+    "level1": {
+      "count": 7,
+      "pitch_deg": [24, 50],
+      "sides": 3,
+      "segments": 3,
+      "len_ratio": 0.52,
+      "radius_ratio": 0.30
+    },
+    "level2": {
+      "per_parent": 1,
+      "at": [0.55, 0.9],
+      "pitch_deg": [16, 40],
+      "sides": 3,
+      "segments": 3,
+      "len_ratio": 0.5,
+      "radius_ratio": 0.40
+    }
+  },
+  "twig": {
+    "per_tip": 2,
+    "len": 0.26,
+    "width": 0.010
+  },
+  "canopy": 0.12,
+  "droop": 1.05,
+  "leaf": {
+    "prototypes": ["P01", "P02", "P01", "P03"],
+    "scale": 1.15,
+    "per_cluster": 2,
+    "cluster_spread": 0.03,
+    "attach": {
+      "branch": 2,
+      "twig": 3
+    }
+  },
+  "season": {
+    "leaf_factor": 0.6,
+    "palette": "winter"
+  },
+  "budget": {
+    "branch_max_tri": 1000,
+    "leaf_max_tri": 2500
+  },
+  "variation": {
+    "seed_stride": 977,
+    "height": 0.08,
+    "branch_count": 2
+  }
+}

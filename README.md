@@ -36,6 +36,24 @@ STARTER 把这些变成一次性的向导问答，产出确定的 `AGENTS.md`，
 
 `AGENTS.md` 属于项目本地配置，不进入版本库；仓库只维护技能本身。
 
+## 白桦树生成器（birch）
+
+`.skill/birch/` 是项目专属的程序化白桦树生成器：按 preset 在 Blender 里生成主干、分枝、细枝与叶簇，纯 `bpy` 实现，同一 `seed` 必然产出同一棵树。
+
+一条命令直出预览，不保存 `.blend`，跑完自动退出 Blender：
+
+```
+blender -b --factory-startup --python ".skill/birch/scripts/preview.py" -- --preset birch
+```
+
+- 默认输出 `previews/TheFarField_birch_default_birch.png`
+- 冬季稀疏版：`--preset birch_winter`
+- `--out` 用绝对路径（Blender 的 cwd 不等于项目根）
+- 面数预算：枝干 1000 三角面内、叶片按 `canopy` 折算，单棵约 3200 面
+- 调形态只改 `presets/*.json`；只有结构要变（新树种、新分级）才动 `scripts/treegen.py`
+
+细节见 [`.skill/birch/SKILL.md`](.skill/birch/SKILL.md)。
+
 ## 目录结构
 
 ```
@@ -47,6 +65,15 @@ STARTER 把这些变成一次性的向导问答，产出确定的 `AGENTS.md`，
 └── references/
     ├── AGENTS_TEMPLATE.md         带占位符的模板与填写对照
     └── MCP_SETUP.md               前置依赖、开工自检与跨平台启动
+
+.skill/birch/
+├── SKILL.md                       生成器说明与调用方式
+├── presets/
+│   ├── birch.json                 夏季标准白桦默认参数
+│   └── birch_winter.json          冬季稀疏版本参数
+└── scripts/
+    ├── treegen.py                 生成器本体（纯 bpy，确定性）
+    └── preview.py                 一键直出预览
 ```
 
 ## 前置条件

@@ -344,6 +344,7 @@ def build(spec, name="Tree_Birch", origin=(0.0, 0.0, 0.0), collection=None, mate
             branch_f.extend(tuple(i + off for i in f) for f in sf)
             branch_chains.append(spts)
 
+    # 细枝只作为叶片挂点，不生成几何
     twig_v, twig_f = [], []
     twig_chains = []
     tw = spec["twig"]
@@ -386,14 +387,11 @@ def build(spec, name="Tree_Birch", origin=(0.0, 0.0, 0.0), collection=None, mate
     objs = {
         "trunk": _new_object(f"{name}_Trunk", trunk_v, trunk_f, collection, material),
         "branches": _new_object(f"{name}_Branches", branch_v, branch_f, collection, material),
-        "twigs": _new_object(f"{name}_Twigs", twig_v, twig_f, collection, material),
         "leaves": _new_object(f"{name}_Leaves", leaf_v, leaf_f, collection, material),
     }
     report = {
         "trunk_tri": len(trunk_f),
-        "branch_tri": len(branch_f) + len(twig_f),
-        "branch_only_tri": len(branch_f),
-        "twig_tri": len(twig_f),
+        "branch_tri": len(branch_f),
         "leaf_tri": len(leaf_f),
         "leaf_count": leaf_total,
         "branch_budget": spec["budget"]["branch_max_tri"],
@@ -402,7 +400,7 @@ def build(spec, name="Tree_Birch", origin=(0.0, 0.0, 0.0), collection=None, mate
     if report["branch_tri"] > spec["budget"]["branch_max_tri"]:
         raise RuntimeError(
             f"枝干面数 {report['branch_tri']} 超出预算 {spec['budget']['branch_max_tri']}；"
-            f"降低 branch.level1.count 或 twig.per_tip"
+            f"降低 branch.level1.count 或 branch.level2.per_parent"
         )
     return objs, report
 

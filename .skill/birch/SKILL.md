@@ -8,7 +8,7 @@ description: "白桦树生成器：按 preset 参数在 Blender 里生成枝干�
 ## 触发条件
 
 - 要生成一棵或多棵树木（白桦为首个树种）
-- 要调整形态：高度、分枝数、分枝角、细枝、叶簇
+- 要调整形态：高度、分枝数、分枝角、叶簇
 - 要调整茂密度（`canopy`）或季相（`season`）
 - 要把一套树木参数固化成可复现的 preset
 
@@ -70,14 +70,14 @@ objs, report = treegen.build(spec, name="Tree_Birch", collection=treegen.ensure_
 | `branch.level1.pitch_deg` | 顶层 | 分枝仰角区间，越小越平展 |
 | `branch.level1.len_ratio` | 顶层 | 一级枝长占树高比例，决定横向铺开宽度 |
 | `branch.level2.*` | 顶层 | 二级分枝数量、角度、长度衰减 |
-| `twig.per_tip` / `len` | 顶层 | 细枝面片数量与长度，影响轮廓碎度 |
 | `canopy` | 顶层 | 0–1 茂密度；直接乘出叶片三角面预算 |
-| `droop` | 顶层 | 全局重力强度，默认 1.0；内部按 一级枝 0.6 / 二级枝 0.9 / 细枝 1.1 / 叶片 1.0（枝梢 1.25）递增，越靠梢越垂 |
+| `twig.per_tip` / `len` | 顶层 | 细枝挂点数量与长度；细枝不生成几何，只决定叶片往枝梢外延伸的距离 |
+| `droop` | 顶层 | 全局重力强度，默认 1.0；内部按 一级枝 0.6 / 二级枝 0.9 / 叶片 1.0（枝梢 1.25）递增，越靠梢越垂 |
 | `leaf.prototypes` | 顶层 | 叶原型序列，循环取用；决定平均面数与叶数 |
 | `leaf.scale` | 顶层 | 叶片缩放，越大叶越少但仍占满预算 |
 | `leaf.per_cluster` | 顶层 | 每簇叶数，簇越大越成团 |
 | `leaf.cluster_spread` | 顶层 | 簇内散开半径，越小越紧密 |
-| `leaf.attach` | 顶层 | 沿枝/沿细枝的挂载点数量；主干不挂叶 |
+| `leaf.attach.branch` / `.twig` | 顶层 | 沿枝条 / 沿细枝挂点的叶片簇数量；主干不挂叶 |
 | `season.leaf_factor` | 顶层 | 叶量系数：春 0.6 / 夏 1.0 / 秋 0.7 / 冬 0.0 |
 | `budget.branch_max_tri` | 顶层 | 枝干面数硬上限，超出直接抛错 |
 | `budget.leaf_max_tri` | 顶层 | 满 `canopy` 时的叶片面数上限 |
@@ -89,13 +89,13 @@ objs, report = treegen.build(spec, name="Tree_Birch", collection=treegen.ensure_
 
 ## 茂密度五档
 
-| canopy | 观感 | 白桦叶面数（默认预算 1450） |
+| canopy | 观感 | 白桦叶面数（默认预算 2200） |
 |---|---|---|
-| 1.00 | 极密 | 1450 / 580 片 |
-| 0.75 | 密 | 1090 / 435 片 |
-| 0.50 | 中 | 725 / 290 片 |
-| 0.25 | 疏 | 360 / 145 片 |
-| 0.10 | 极疏 | 145 / 58 片 |
+| 1.00 | 极密 | 2200 / 880 片 |
+| 0.75 | 密 | 1650 / 660 片 |
+| 0.50 | 中 | 1100 / 440 片 |
+| 0.25 | 疏 | 550 / 220 片 |
+| 0.10 | 极疏 | 220 / 88 片 |
 
 同一份 preset 只改 `canopy` 即可，不要复制脚本。
 
@@ -107,7 +107,7 @@ objs, report = treegen.build(spec, name="Tree_Birch", collection=treegen.ensure_
 blender -b --factory-startup --python .skill/birch/scripts/preview.py -- --preset birch
 ```
 
-标准形态基线（改动后需重新对照）：主干 76 / 枝干 810 / 细枝 180 / 叶片 2200，合计 3086 三角面（总预算 3200）；一级枝 10 条，叶 880 片，树高约 5.7m。
+标准形态基线（改动后需重新对照）：主干 76 / 枝干 630 / 叶片 2200，合计 2906 三角面（总预算 3200）；一级枝 10 条，叶 880 片，树高约 5.7m。
 
 默认行为：生成 → 打环境光 → 摆参考人 → 渲染 `previews/TheFarField_birch_default_<preset>.png` → 退出 Blender。
 
@@ -127,9 +127,9 @@ results = treegen.spawn_variants(spec, count=5, spacing=2.4, x0=-4.8)
 ## 硬约束
 
 - 全部三角面
-- 主干 5 边、次枝 3 边、最低级退化为面片
+- 主干 5 边、次枝 3 边
 - 叶片禁止朝天：生成后法线 `z > 0.25` 会被翻转，隔离校验口径是 `normal.z > 0.3` 的面数应为 0
-- 主干不挂叶，叶片只挂次级枝与细枝
+- 主干不挂叶，叶片只挂次级枝与细枝挂点；细枝仅参与挂点计算，不生成几何
 - 枝干面数超 `branch_max_tri` 抛 `RuntimeError`，不静默截断
 
 ## 验收

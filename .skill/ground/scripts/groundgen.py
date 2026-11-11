@@ -429,18 +429,29 @@ def build_material(spec):
 
 
 def build(spec, name="Tile_Ground", collection=None, scene=None, location=(0.0, 0.0, 0.0)):
-    """创建单四边面地块并挂载程序化材质。"""
+    """创建地块板体：顶面 z=0，向下挤出厚度，底面封闭。"""
     scene = scene or bpy.context.scene
     size = float(spec["tile"]["size_m"])
+    thickness = float(spec["tile"].get("thickness_m", 0.2))
     uv_per_m = float(spec["tile"].get("uv_per_m", 1.0))
     h = size * 0.5
 
+    verts = [
+        (-h, -h, 0.0), (h, -h, 0.0), (h, h, 0.0), (-h, h, 0.0),
+        (-h, -h, -thickness), (h, -h, -thickness),
+        (h, h, -thickness), (-h, h, -thickness),
+    ]
+    faces = [
+        (0, 1, 2), (0, 2, 3),
+        (4, 6, 5), (4, 7, 6),
+        (0, 4, 5), (0, 5, 1),
+        (1, 5, 6), (1, 6, 2),
+        (2, 6, 7), (2, 7, 3),
+        (3, 7, 4), (3, 4, 0),
+    ]
+
     me = bpy.data.meshes.new(name + "_Mesh")
-    me.from_pydata(
-        [(-h, -h, 0.0), (h, -h, 0.0), (h, h, 0.0), (-h, h, 0.0)],
-        [],
-        [(0, 1, 2, 3)],
-    )
+    me.from_pydata(verts, [], faces)
     me.update()
 
     uv = me.uv_layers.new(name="UVMap")

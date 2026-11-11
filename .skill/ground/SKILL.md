@@ -13,7 +13,7 @@
 
 `groundgen.build(spec)` 返回一个地块对象：
 
-- 几何：16m × 16m 单一四边面（2 三角面），位于 z=0，无细分、无起伏、无厚度；
+- 几何：16m × 16m 板体（12 三角面），顶面严格位于 z=0，向下挤出 `tile.thickness_m` 并封底；无细分、无起伏；
 - UV：米制平铺，`uv_per_m=1` 时 U/V 跨度为 0–16 m，供导出/引擎侧使用；
 - 材质：`M_Ground_<type>`，全部为 ShaderNode，无 `TEX_IMAGE`；
 - 坐标：材质以 `Geometry > Position`（世界空间）驱动，纹理按真实米制分布，相邻地块拼接无缝、无重复。
@@ -23,6 +23,7 @@
 ```
 seed                      唯一随机源：相同 seed 结果完全一致
 tile.size_m               地块边长（默认 16）
+tile.thickness_m          向下挤出的板厚（默认 0.2，顶面恒在 z=0）
 tile.uv_per_m             UV 每米重复数（默认 1）
 material.roughness        粗糙度常量（默认 0.93）
 material.soil.*           腐殖土三段色 + 噪声尺度

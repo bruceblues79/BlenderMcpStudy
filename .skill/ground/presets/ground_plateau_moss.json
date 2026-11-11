@@ -3,6 +3,7 @@
   "seed": 20261111,
   "tile": {
     "size_m": 16.0,
+    "thickness_m": 0.2,
     "uv_per_m": 1.0
   },
   "material": {
@@ -42,7 +43,7 @@
       }
     },
     "litter": {
-      "weight": 0.5,
+      "weight": 0.0,
       "cluster": {
         "scale": 0.3,
         "detail": 4.0,
@@ -83,7 +84,7 @@
       }
     },
     "lichen": {
-      "weight": 0.25,
+      "weight": 0.0,
       "gain": 0.75,
       "dark": "#7d7a63",
       "light": "#a9a487",

@@ -30,7 +30,7 @@ description: "语义巨石生成：用形态语义（扁平卧石/方块/竖高/
 
 ```python
 import sys
-SKILL = r"c:\Users\bruce\Documents\BlenderProjects\BlenderMcpStudy\.skill\boulder"
+SKILL = r"c:\Users\bruce\Documents\BlenderProjects\BlenderMcpStudy\skills\boulder"
 sys.path.insert(0, SKILL + r"\scripts")
 import bouldergen
 

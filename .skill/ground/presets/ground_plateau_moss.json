@@ -1,0 +1,147 @@
+{
+  "type": "ground_plateau_moss",
+  "seed": 20261111,
+  "tile": {
+    "size_m": 16.0,
+    "uv_per_m": 1.0
+  },
+  "material": {
+    "name": "M_Ground_PlateauMoss",
+    "roughness": 0.93,
+    "soil": {
+      "dark": "#241f19",
+      "mid": "#3a3128",
+      "light": "#55483a",
+      "scale": 0.09,
+      "detail": 4.0,
+      "roughness": 0.55,
+      "distortion": 0.25
+    },
+    "moss": {
+      "weight": 0.55,
+      "deep": "#333f1f",
+      "mid": "#4b562e",
+      "light": "#68713f",
+      "region": {
+        "scale": 0.13,
+        "detail": 5.0,
+        "roughness": 0.6,
+        "distortion": 1.4
+      },
+      "edge": {
+        "scale": 2.2,
+        "detail": 6.0,
+        "roughness": 0.62,
+        "distortion": 0.4
+      },
+      "color": {
+        "scale": 5.5,
+        "detail": 5.0,
+        "roughness": 0.65,
+        "distortion": 0.6
+      }
+    },
+    "litter": {
+      "weight": 0.5,
+      "cluster": {
+        "scale": 0.3,
+        "detail": 4.0,
+        "roughness": 0.55,
+        "distortion": 0.5
+      },
+      "big": {
+        "scale": 8.0,
+        "radius": 0.37,
+        "stretch": 0.62,
+        "edge_scale": 18.0,
+        "gain": 1.0,
+        "dark": "#6f5a3a",
+        "light": "#8d7749"
+      },
+      "frag": {
+        "scale": 30.0,
+        "radius": 0.22,
+        "stretch": 1.0,
+        "edge_scale": 42.0,
+        "gain": 0.25,
+        "dark": "#63523a",
+        "light": "#86724d"
+      }
+    },
+    "gravel": {
+      "weight": 0.25,
+      "scale": 14.0,
+      "radius": 0.36,
+      "edge_scale": 30.0,
+      "dark": "#3e3f39",
+      "light": "#616259",
+      "mask": {
+        "scale": 0.5,
+        "detail": 4.0,
+        "roughness": 0.55,
+        "distortion": 0.4
+      }
+    },
+    "lichen": {
+      "weight": 0.25,
+      "gain": 0.75,
+      "dark": "#7d7a63",
+      "light": "#a9a487",
+      "patch": {
+        "scale": 0.55,
+        "detail": 5.0,
+        "roughness": 0.6,
+        "distortion": 0.6
+      },
+      "edge": {
+        "scale": 14.0,
+        "detail": 3.0,
+        "roughness": 0.55,
+        "distortion": 0.0
+      },
+      "color": {
+        "scale": 26.0,
+        "detail": 3.0,
+        "roughness": 0.5,
+        "distortion": 0.0
+      }
+    },
+    "grain": {
+      "scale": 30.0,
+      "dark": 0.76
+    },
+    "bump": {
+      "mid": {
+        "scale": 7.0,
+        "detail": 3.0,
+        "roughness": 0.55,
+        "distortion": 0.5,
+        "strength": 0.25,
+        "distance": 0.012
+      },
+      "micro": {
+        "scale": 48.0,
+        "detail": 5.0,
+        "roughness": 0.62,
+        "distortion": 0.35,
+        "strength": 0.3,
+        "distance": 0.002
+      },
+      "litter": {
+        "strength": 0.45,
+        "distance": 0.005
+      },
+      "gravel": {
+        "strength": 0.7,
+        "distance": 0.008
+      },
+      "fine": {
+        "scale": 120.0,
+        "detail": 2.0,
+        "roughness": 0.5,
+        "strength": 0.2,
+        "distance": 0.0015
+      }
+    }
+  }
+}

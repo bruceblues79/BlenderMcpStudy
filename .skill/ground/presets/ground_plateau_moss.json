@@ -4,7 +4,8 @@
   "tile": {
     "size_m": 16.0,
     "thickness_m": 0.2,
-    "uv_per_m": 1.0
+    "uv_per_m": 1.0,
+    "grid": 6
   },
   "material": {
     "name": "M_Ground_PlateauMoss",

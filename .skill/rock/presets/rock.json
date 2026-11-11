@@ -1,0 +1,117 @@
+{
+  "kind": "rock",
+  "seed": 0,
+  "budget": { "max_tri": 75, "min_tri": 24 },
+  "bounds": { "max_m": 0.5, "min_m": 0.2 },
+  "embed": [0.14, 0.22],
+  "jitter": 0.01,
+  "smooth_factor": 0.26,
+  "smooth_angle_deg": 45.0,
+  "uv_tile_m": 0.5,
+  "material": {
+    "name": "MAT_Rock_Granite",
+    "roughness": 0.62,
+    "metallic": 0.0,
+    "texture": {
+      "kind": "granite_cool",
+      "tile_m": 0.5,
+      "mottle": { "large_m": 0.34, "contrast": 0.2 },
+      "grain": { "size_mm": 4.5, "feldspar": 0.32, "mica": 0.14 },
+      "albedo": {
+        "base": [0.2185, 0.2266, 0.2404],
+        "feldspar": [0.48, 0.5, 0.53],
+        "mica": [0.014, 0.016, 0.02]
+      },
+      "bump": { "strength": 0.7, "distance_m": 0.0018, "grain": 0.7, "mottle": 0.3 }
+    }
+  },
+  "prototypes": [
+    {
+      "id": "P01",
+      "form": "angular",
+      "points": 20,
+      "squash": 0.92,
+      "roughness": 0.2,
+      "cuts": 4,
+      "top_ratio": 0.76,
+      "deep_cut": true,
+      "dims": [0.46, 0.39, 0.36],
+      "seed": 11
+    },
+    {
+      "id": "P02",
+      "form": "angular",
+      "points": 16,
+      "squash": 0.88,
+      "roughness": 0.2,
+      "cuts": 3,
+      "top_ratio": null,
+      "deep_cut": false,
+      "dims": [0.34, 0.3, 0.27],
+      "seed": 23
+    },
+    {
+      "id": "P03",
+      "form": "angular",
+      "points": 24,
+      "squash": 0.52,
+      "roughness": 0.16,
+      "cuts": 3,
+      "top_ratio": 0.9,
+      "deep_cut": false,
+      "dims": [0.5, 0.41, 0.24],
+      "seed": 37
+    },
+    {
+      "id": "P04",
+      "form": "rounded",
+      "squash": 0.86,
+      "cuts": 0,
+      "deep_cut": false,
+      "dims": [0.4, 0.35, 0.32],
+      "seed": 41
+    },
+    {
+      "id": "P05",
+      "form": "angular",
+      "points": 14,
+      "squash": 0.86,
+      "roughness": 0.24,
+      "cuts": 2,
+      "top_ratio": null,
+      "deep_cut": false,
+      "dims": [0.29, 0.25, 0.23],
+      "seed": 53
+    },
+    {
+      "id": "P06",
+      "form": "rounded",
+      "squash": 0.7,
+      "cuts": 0,
+      "deep_cut": false,
+      "dims": [0.32, 0.28, 0.25],
+      "seed": 67
+    },
+    {
+      "id": "P07",
+      "form": "angular",
+      "points": 18,
+      "squash": 0.95,
+      "roughness": 0.18,
+      "cuts": 4,
+      "top_ratio": 0.64,
+      "deep_cut": true,
+      "dims": [0.5, 0.38, 0.35],
+      "seed": 79
+    }
+  ],
+  "placement": [
+    [-1.6, -3.2],
+    [0.6, -4.1],
+    [2.7, -2.3],
+    [-3.4, -1.6],
+    [-0.4, -1.9],
+    [0.3, 2.4],
+    [-2.1, 1.1]
+  ]
+}

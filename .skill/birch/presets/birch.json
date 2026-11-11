@@ -61,5 +61,25 @@
     "seed_stride": 977,
     "height": 0.10,
     "branch_count": 2
+  },
+  "material": {
+    "bark": {
+      "roughness": 0.9,
+      "base": [0.68, 0.672, 0.653],
+      "mottle": 0.075,
+      "grain": 0.015,
+      "lenticels": { "rows_per_m": 85.0, "dash_m": 0.04, "strength": 1.45 },
+      "cracks": { "per_m": 18.0, "strength": 0.35, "width": 0.005 },
+      "bump": { "strength": 0.6, "distance_m": 0.003 },
+      "dark": [0.032, 0.028, 0.024]
+    },
+    "leaf": {
+      "roughness": 0.6,
+      "deep": [0.105, 0.245, 0.034],
+      "pale": [0.195, 0.365, 0.058],
+      "midrib": 0.2,
+      "per_leaf": 6.0,
+      "bump": { "strength": 0.5, "distance_m": 0.0015 }
+    }
   }
 }

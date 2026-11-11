@@ -19,20 +19,12 @@ description: "石块生成器：按 preset 参数在 Blender 里生成低面数�
 | 文件 | 作用 |
 |---|---|
 | `scripts/rockgen.py` | 生成器本体，纯 `bpy`，确定性 |
-| `scripts/gen_tex.py` | 贴图生成：512² 冷灰花岗岩固有色 + 法线，四边无缝 |
 | `scripts/preview.py` | 批处理直出：生成 + 环境光 + 参考人 + 渲染 |
-| `presets/rock.json` | 七种石块标准参数（定版默认） |
-| `textures/` | 生成产物：`rock_granite_color.png` / `rock_granite_normal.png` |
+| `presets/rock.json` | 七种石块标准参数 + 程序化花岗岩配方（定版默认） |
+
+材质由节点实时计算，**技能内不含任何贴图文件**。
 
 ## 运行
-
-### 先生成贴图（改贴图参数后跑一次）
-
-```
-blender -b --factory-startup --python ".skill/rock/scripts/gen_tex.py"
-```
-
-输出到 `.skill/rock/textures/`，文件已存在时直接覆盖，材质按固定路径引用。
 
 ### 默认直出（离线批处理）
 
@@ -85,7 +77,13 @@ report = rockgen.main(os.path.join(SKILL, "presets", "rock.json"), collection_na
 | `smooth_factor` | 顶层 | 凸包后平滑强度，越大越圆钝 |
 | `smooth_angle_deg` | 顶层 | 角度平滑阈值：面间夹角 ≤ 该值的边平滑过渡，超过则保持硬棱（默认 45°） |
 | `uv_tile_m` | 顶层 | UV 密度：一张贴图覆盖的真实边长（米），默认 0.5 |
-| `material` | 顶层 | 材质名、粗糙度、金属度常量，以及固有色/法线贴图文件名与法线强度 |
+| `material` | 顶层 | 材质名与粗糙度、金属度常量 |
+| `material.texture.kind` | 顶层 | 花岗岩配方名，目前只有 `granite_cool`（冷灰） |
+| `material.texture.tile_m` | 顶层 | 配方对应的真实边长（米），与 `uv_tile_m` 一致 |
+| `material.texture.mottle` | 顶层 | 大尺度色斑：`large_m` 斑块尺寸（米）、`contrast` 明暗幅度 |
+| `material.texture.grain` | 顶层 | 矿粒：`size_mm` 晶粒直径（毫米）、`feldspar` 长石亮斑半径、`mica` 云母暗斑半径（Voronoi 距离） |
+| `material.texture.albedo` | 顶层 | 线性 RGB 三色：`base` 底色 / `feldspar` 长石 / `mica` 云母 |
+| `material.texture.bump` | 顶层 | 凹凸：`strength` 强度、`distance_m` 高度差（米）、`grain`/`mottle` 权重 |
 | `prototypes[].id` | 数组 | 石块编号，同时决定网格与物体名 `Rock_<id>` |
 | `prototypes[].form` | 数组 | `angular` 棱角型 / `rounded` 圆钝型，两条生成分支 |
 | `prototypes[].points` | 数组 | 斐波那契球面取点数，决定原始凸包的棱面数量 |
@@ -126,7 +124,7 @@ blender -b --factory-startup --python .skill/rock/scripts/preview.py -- --preset
 
 默认行为：生成 → 打环境光 → 摆参考人 → 渲染 `previews/TheFarField_rock_placement_<preset>.png` → 退出 Blender。
 
-基线（改动后需重新对照）：7 块 / 430 三角面（每块 46–70）、尺寸 0.20–0.50m、角度平滑 45°、`uv_tile_m` 0.5、粗糙度常量 0.62、共用 512² 花岗岩贴图一套。
+基线（改动后需重新对照）：7 块 / 430 三角面（每块 46–70）、尺寸 0.20–0.50m、角度平滑 45°、`uv_tile_m` 0.5、粗糙度常量 0.62、程序化花岗岩配方一套。
 
 规则：
 - 不保存 `.blend`，脚本生成的场景一律视为试验产物
@@ -145,10 +143,15 @@ objs, report = rockgen.spawn_variants(spec, count=7, spacing=0.75, x0=-2.1, y=-6
 
 - UV 在生成器内写入，与 `.skill/birch` 的做法一致：不依赖智能展开，不事后补 UV
 - 盒式投影：每个面按法线主导轴（X/Y/Z 中绝对值最大者）投影到平面，UV 直接取该面顶点的真实米数除以 `uv_tile_m`
-- 结果：一张贴图固定覆盖 0.5m×0.5m，块石越大贴图重复次数越多，不同尺寸石块矿粒密度一致
-- 七块共用一套 512² 贴图（冷灰花岗岩固有色 + 法线），材质 `MAT_Rock_Granite`，粗糙度 0.62 / 金属度 0 为常量，不出粗糙度贴图
-- 贴图由 `scripts/gen_tex.py` 生成：FFT 白噪声低通做毫米级矿粒，长石亮粒/云母暗粒分两个独立场，法线由高度场中心差分得出，四边严格无缝
-- 材质节点：`Rock_Albedo` → Base Color，`Rock_Normal`（Non-Color）→ Normal Map（强度取 `material.normal_strength`）→ Normal
+- 结果：配方固定覆盖 0.5m×0.5m，块石越大纹理重复次数越多，不同尺寸石块矿粒密度一致
+- 材质 `MAT_Rock_Granite` 全程序化，**不读任何图片**：`ShaderNodeTexCoord` 取 UV → 噪声/Voronoi → 颜色混合 → `Bump`
+- 配方三层：
+  - 大斑：`Noise(large_m)` 经 ColorRamp 重塑 → 在 `base` 上下按 `contrast` 混合，避免平铺感
+  - 长石亮斑：`Voronoi F1`（晶粒 `size_mm`）距离 < `feldspar` 的胞心区域 → 混向长石色
+  - 云母暗斑：另一组 4D Voronoi（`W` 偏移打散）距离 < `mica` 处 → 混向近黑
+- 凹凸：`Noise` 高频 + 大斑噪声按 `bump.grain` / `bump.mottle` 加权 → `Bump`（Distance 用米，默认 1.8mm）
+- 粗糙度 0.62 / 金属度 0 为常量，不出粗糙度贴图
+- 所有尺寸参数都是物理单位（米 / 毫米），与 `uv_tile_m` 解耦，换分辨率或换引擎不会改变观感尺度
 
 ## 固化产物与移植
 
@@ -156,10 +159,11 @@ objs, report = rockgen.spawn_variants(spec, count=7, spacing=0.75, x0=-2.1, y=-6
 
 | 产物 | 可移植性 |
 |---|---|
-| `presets/rock.json` | 纯 JSON、单位为米、种子为整数，不含任何 Blender 专有字段，可直接当作运行时配置 |
+| `presets/rock.json` | 纯 JSON、单位为米、种子为整数，几何与材质配方都在里面，可直接当作运行时配置 |
 | `scripts/rockgen.py` | 算法描述；随机只走 `random.Random(seed)`，顺序固定，无时钟/哈希依赖 |
-| `scripts/gen_tex.py` | 贴图配方；产物是普通 PNG，可直接打包，也可改写成运行时程序化生成 |
 | 本文件 | 参数语义与验收口径；换引擎时照着它对齐 |
+
+材质没有任何二进制资产：`rock.json` 的 `material.texture` 就是配方，Blender 用节点实现，游戏端用 shader 实现，两边吃同一份 JSON。
 
 移植到 Three.js 时的算子对照：
 
@@ -172,7 +176,8 @@ objs, report = rockgen.spawn_variants(spec, count=7, spacing=0.75, x0=-2.1, y=-6
 | `_shade_by_angle` | `BufferGeometryUtils.toCreasedNormals(geo, 45°)` |
 | `_uv_box` | 直接照搬（面法线主轴 → 平面投影，米数 ÷ `uv_tile_m`） |
 | `_fit` / 下沉 | 直接照搬（包围盒缩放 + 底面贴地） |
-| 贴图 | 优先在 GLSL 里程序化生成固有色与法线扰动，避免 512² 贴图的近看像素化 |
+| `Noise` / `Voronoi` 节点 | 片元着色器里的 value-noise / Worley（3D 噪声，按米取尺度），或 CPU 烘进 `DataTexture` |
+| `Bump` 节点 | 片元里对高度求导扰动法线，或 `normalMap` 由烘出的高度场生成 |
 
 移植时必须一并带走的三条契约：
 - 种子全表集中，任何一处引入非确定性都会让同一 preset 在不同平台产出不同石块
@@ -186,15 +191,15 @@ objs, report = rockgen.spawn_variants(spec, count=7, spacing=0.75, x0=-2.1, y=-6
 - 包围盒三轴都落在 `[bounds.min_m, bounds.max_m]`，任一轴越界抛错
 - 着色统一按角度平滑：所有面 `smooth`，面间夹角 > `smooth_angle_deg` 的边标锐边，所以大面保持硬棱、弧面过渡柔和；不使用 `shade_auto_smooth` 修改器，锐边直接写进网格数据
 - 不做倒角，破损靠切面与顶点扰动
-- 所有石块共用同一套贴图与材质，不逐块出图
-- UV 必须真实尺度：贴图边长 = `uv_tile_m` 米，禁止按单块包围盒归一化（会让大小块的矿粒密度不一致）
+- 所有石块共用同一个材质与配方，不逐块出图
+- UV 必须真实尺度：配方边长 = `uv_tile_m` 米，禁止按单块包围盒归一化（会让大小块的矿粒密度不一致）
 
 ## 验收
 
 1. 打印 report，逐块核对 `tri` / `dims` / `embed`
 2. 三轴尺寸全部在 0.2–0.5m，面数全部 ≤ 75
 3. 每块网格有 1 层 UV，UV 跨度 = 真实尺寸 / `uv_tile_m`（如 0.46m 块 → 约 0.92）
-4. 材质槽是 `MAT_Rock_Granite`，Base Color 与 Normal 都接上贴图，Roughness = 0.62 常量
+4. 材质槽是 `MAT_Rock_Granite`，节点树里没有 `TEX_IMAGE`，Base Color 与 Normal 都来自节点，Roughness = 0.62 常量
 5. 出图看：七块形态是否可辨、是否过于碎片化、顶面是否平整、参考人比例是否正确、矿粒密度是否一致
 6. 命名 `TheFarField_<内容>_YYMMDDHHMM.blend`，存 `scenes/`，预览存 `previews/`
 
@@ -203,5 +208,6 @@ objs, report = rockgen.spawn_variants(spec, count=7, spacing=0.75, x0=-2.1, y=-6
 - 只有棱角 / 圆钝两条生成分支；层状板岩、蜂窝风化石需新增分支
 - 圆钝型固定 8×5 段 UV 球基底，形状变化只靠噪声与一刀浅切，重复度高
 - 切口是平面切，产生的是直棱直角的撞击面，没有真实的贝壳状断口
-- 盒式投影在主导轴切换的边上有 UV 接缝；矿粒贴图在各块上的朝向不统一（无整体纹理方向约定）
-- 贴图为单套 512²，近看约 1px≈1mm，再近会看出像素颗粒
+- 盒式投影在主导轴切换的边上有 UV 接缝；矿粒在各块上的朝向不统一（无整体纹理方向约定）
+- 程序化噪声不带 mipmap：远距离或 VR 斜视角下矿粒会闪烁，需要时在引擎侧配各向异性过滤或距离淡出
+- 晶粒用 Voronoi 胞心做，形状是圆斑而非真实花岗岩的自形晶，凑近看偏“点状”

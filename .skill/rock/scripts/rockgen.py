@@ -12,7 +12,6 @@ import random
 from mathutils import Vector, Matrix
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-TEX_DIR = os.path.join(os.path.dirname(HERE), "textures")
 
 DEFAULTS = {
     "budget": {"max_tri": 75, "min_tri": 12},
@@ -23,9 +22,18 @@ DEFAULTS = {
         "name": "MAT_Rock_Granite",
         "roughness": 0.62,
         "metallic": 0.0,
-        "albedo": "rock_granite_color.png",
-        "normal": "rock_granite_normal.png",
-        "normal_strength": 0.6,
+        "texture": {
+            "kind": "granite_cool",
+            "tile_m": 0.5,
+            "mottle": {"large_m": 0.34, "contrast": 0.2},
+            "grain": {"size_mm": 4.5, "feldspar": 0.32, "mica": 0.14},
+            "albedo": {
+                "base": [0.2185, 0.2266, 0.2404],
+                "feldspar": [0.48, 0.5, 0.53],
+                "mica": [0.014, 0.016, 0.02],
+            },
+            "bump": {"strength": 0.7, "distance_m": 0.0018, "grain": 0.7, "mottle": 0.3},
+        },
     },
     "jitter": 0.010,
     "smooth_factor": 0.26,
@@ -201,36 +209,169 @@ def _shade_by_angle(bm, angle_deg):
     return bm
 
 
+def _add_ramp(nt, stops, label, constant=False):
+    """stops = [(position, value), ...]，value 为 0–1 灰度。"""
+    node = nt.nodes.new("ShaderNodeValToRGB")
+    node.label = label
+    ramp = node.color_ramp
+    ramp.interpolation = 'CONSTANT' if constant else 'LINEAR'
+    elems = ramp.elements
+    while len(elems) > len(stops):
+        elems.remove(elems[-1])
+    while len(elems) < len(stops):
+        elems.new(0.5)
+    for elem, (pos, value) in zip(elems, stops):
+        elem.position = pos
+        elem.color = (value, value, value, 1.0)
+    return node
+
+
+def _add_mix(nt, factor, color_a, color_b, label, blend='MIX'):
+    """颜色混合；color_a 可以是 socket 或 RGB 序列。"""
+    node = nt.nodes.new("ShaderNodeMix")
+    node.data_type = 'RGBA'
+    node.blend_type = blend
+    node.label = label
+    for sock in node.inputs:
+        if sock.name == 'A' and sock.type == 'RGBA':
+            if hasattr(color_a, "links"):
+                nt.links.new(color_a, sock)
+            else:
+                sock.default_value = (color_a[0], color_a[1], color_a[2], 1.0)
+        elif sock.name == 'B' and sock.type == 'RGBA':
+            if hasattr(color_b, "links"):
+                nt.links.new(color_b, sock)
+            else:
+                sock.default_value = (color_b[0], color_b[1], color_b[2], 1.0)
+    nt.links.new(factor, node.inputs[0])
+    return node
+
+
+def _add_math(nt, op, a, b=None, label=""):
+    node = nt.nodes.new("ShaderNodeMath")
+    node.operation = op
+    node.label = label
+    if hasattr(a, "links"):
+        nt.links.new(a, node.inputs[0])
+    else:
+        node.inputs[0].default_value = a
+    if b is not None:
+        if hasattr(b, "links"):
+            nt.links.new(b, node.inputs[1])
+        else:
+            node.inputs[1].default_value = b
+    return node
+
+
+def _procedural_material(mat, conf):
+    """程序化花岗岩：一个纹理文件都不读，全部由 recipe 参数生成。"""
+    tex = conf["texture"]
+    tile = float(tex.get("tile_m", 0.5))
+    mt = tex["mottle"]
+    gr = tex["grain"]
+    alb = tex["albedo"]
+    bp = tex["bump"]
+
+    nt = mat.node_tree
+    nt.nodes.clear()
+    out = nt.nodes.new("ShaderNodeOutputMaterial")
+    out.location = (700, 0)
+
+    bsdf = nt.nodes.new("ShaderNodeBsdfPrincipled")
+    bsdf.location = (420, 0)
+    bsdf.inputs["Roughness"].default_value = conf["roughness"]
+    bsdf.inputs["Metallic"].default_value = conf["metallic"]
+    nt.links.new(bsdf.outputs["BSDF"], out.inputs["Surface"])
+
+    coord = nt.nodes.new("ShaderNodeTexCoord")
+    coord.location = (-1100, 0)
+
+    def noise(size_m, detail, loc, w=None):
+        node = nt.nodes.new("ShaderNodeTexNoise")
+        node.location = loc
+        node.inputs["Scale"].default_value = tile / size_m
+        node.inputs["Detail"].default_value = detail
+        node.inputs["Roughness"].default_value = 0.55
+        if w is not None:
+            node.noise_dimensions = '4D'
+            node.inputs["W"].default_value = w
+        nt.links.new(coord.outputs["UV"], node.inputs["Vector"])
+        return node
+
+    big = noise(mt["large_m"], 3.0, (-880, 260))
+    grain_n = noise(gr["size_mm"] / 1000.0, 2.0, (-880, -200))
+
+    def voro(size_m, loc, w=None):
+        node = nt.nodes.new("ShaderNodeTexVoronoi")
+        node.location = loc
+        node.feature = 'F1'
+        node.distance = 'EUCLIDEAN'
+        node.inputs["Scale"].default_value = tile / size_m
+        node.inputs["Randomness"].default_value = 1.0
+        if w is not None:
+            node.voronoi_dimensions = '4D'
+            node.inputs["W"].default_value = w
+        nt.links.new(coord.outputs["UV"], node.inputs["Vector"])
+        return node
+
+    cell_a = voro(gr["size_mm"] / 1000.0, (-880, -340))
+    cell_b = voro(gr["size_mm"] / 1000.0, (-880, -560), w=7.3)
+
+    mottle = _add_ramp(nt, [(0.30, 0.0), (0.70, 1.0)], "Mottle")
+    mottle.location = (-620, 260)
+    nt.links.new(big.outputs["Fac"], mottle.inputs[0])
+
+    base = alb["base"]
+    darker = [c * (1.0 - mt["contrast"]) for c in base]
+    lighter = [c * (1.0 + mt["contrast"]) for c in base]
+    tone = _add_mix(nt, mottle.outputs["Color"], darker, lighter, "BaseTone")
+    tone.location = (-380, 240)
+
+    feld = _add_ramp(
+        nt, [(gr["feldspar"], 1.0), (min(gr["feldspar"] + 0.002, 1.0), 0.0)],
+        "Feldspar", constant=True,
+    )
+    feld.location = (-620, -120)
+    nt.links.new(cell_a.outputs["Distance"], feld.inputs[0])
+    mica = _add_ramp(
+        nt, [(gr["mica"], 1.0), (min(gr["mica"] + 0.002, 1.0), 0.0)],
+        "Mica", constant=True,
+    )
+    mica.location = (-620, -320)
+    nt.links.new(cell_b.outputs["Distance"], mica.inputs[0])
+
+    with_feld = _add_mix(nt, feld.outputs["Color"], tone.outputs[2], alb["feldspar"], "FeldsparMix")
+    with_feld.location = (-140, 200)
+    final = _add_mix(nt, mica.outputs["Color"], with_feld.outputs[2], alb["mica"], "MicaMix")
+    final.location = (80, 160)
+    nt.links.new(final.outputs[2], bsdf.inputs["Base Color"])
+
+    h_grain = _add_math(nt, 'MULTIPLY', grain_n.outputs["Fac"], bp["grain"], "HeightGrain")
+    h_grain.location = (-380, -260)
+    h_mottle = _add_math(nt, 'MULTIPLY', big.outputs["Fac"], bp["mottle"], "HeightMottle")
+    h_mottle.location = (-380, -420)
+    height = _add_math(nt, 'ADD', h_grain.outputs[0], h_mottle.outputs[0], "Height")
+    height.location = (-180, -320)
+
+    bump = nt.nodes.new("ShaderNodeBump")
+    bump.location = (80, -180)
+    bump.inputs["Strength"].default_value = bp["strength"]
+    bump.inputs["Distance"].default_value = bp["distance_m"]
+    nt.links.new(height.outputs[0], bump.inputs["Height"])
+    nt.links.new(bump.outputs["Normal"], bsdf.inputs["Normal"])
+
+    mat.use_nodes = True
+    return mat
+
+
 def _material(spec):
-    """共享材质：固有色 + 法线贴图，粗糙度/金属度走常量。"""
+    """共享材质：程序化花岗岩，无贴图文件；粗糙度/金属度走常量。"""
     conf = spec["material"]
     mat = bpy.data.materials.get(conf["name"])
     if mat is None:
         mat = bpy.data.materials.new(conf["name"])
         mat.use_nodes = True
-    nt = mat.node_tree
-    bsdf = nt.nodes.get("Principled BSDF")
-    bsdf.inputs["Roughness"].default_value = conf["roughness"]
-    bsdf.inputs["Metallic"].default_value = conf["metallic"]
-
-    color = os.path.join(TEX_DIR, conf["albedo"])
-    normal = os.path.join(TEX_DIR, conf["normal"])
-    if os.path.exists(color) and not bsdf.inputs["Base Color"].is_linked:
-        tex = nt.nodes.new("ShaderNodeTexImage")
-        tex.name = "Rock_Albedo"
-        tex.image = bpy.data.images.load(color, check_existing=True)
-        nt.links.new(tex.outputs["Color"], bsdf.inputs["Base Color"])
-    if os.path.exists(normal) and not bsdf.inputs["Normal"].is_linked:
-        img = bpy.data.images.load(normal, check_existing=True)
-        img.colorspace_settings.name = 'Non-Color'
-        tex = nt.nodes.new("ShaderNodeTexImage")
-        tex.name = "Rock_Normal"
-        tex.image = img
-        nmap = nt.nodes.new("ShaderNodeNormalMap")
-        nmap.inputs["Strength"].default_value = conf.get("normal_strength", 1.0)
-        nt.links.new(tex.outputs["Color"], nmap.inputs["Color"])
-        nt.links.new(nmap.outputs["Normal"], bsdf.inputs["Normal"])
-    return mat
+    return _procedural_material(mat, conf)
 
 
 def build(spec, name="Rock", collection=None, placement=None):

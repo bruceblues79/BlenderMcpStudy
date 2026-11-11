@@ -12,9 +12,18 @@
     "name": "MAT_Rock_Granite",
     "roughness": 0.62,
     "metallic": 0.0,
-    "albedo": "rock_granite_color.png",
-    "normal": "rock_granite_normal.png",
-    "normal_strength": 0.6
+    "texture": {
+      "kind": "granite_cool",
+      "tile_m": 0.5,
+      "mottle": { "large_m": 0.34, "contrast": 0.2 },
+      "grain": { "size_mm": 4.5, "feldspar": 0.32, "mica": 0.14 },
+      "albedo": {
+        "base": [0.2185, 0.2266, 0.2404],
+        "feldspar": [0.48, 0.5, 0.53],
+        "mica": [0.014, 0.016, 0.02]
+      },
+      "bump": { "strength": 0.7, "distance_m": 0.0018, "grain": 0.7, "mottle": 0.3 }
+    }
   },
   "prototypes": [
     {

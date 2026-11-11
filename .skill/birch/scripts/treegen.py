@@ -8,15 +8,12 @@
 
 import json
 import math
-import os
 import random
 
 import bpy
 from mathutils import Matrix, Vector
 
 TAU = math.pi * 2.0
-TEX_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                       "assets", "textures")
 
 # 叶原型：N 为轮廓边界点数，三角面数 = N - 2；lobes 为叶缘分裂数
 LEAF_PROTOTYPES = {
@@ -256,7 +253,7 @@ def _leaf_outline(proto_key, scale, single_tri=False):
 
 
 def _place_leaf(verts, faces, uvs, anchor, out_dir, proto_key, scale, droop, rng,
-                single_tri=False):
+                single_tri=False, rands=None):
     pts, faces_local, pt_uvs, _ = _leaf_outline(proto_key, scale, single_tri)
     if not pts:
         return 0
@@ -290,6 +287,9 @@ def _place_leaf(verts, faces, uvs, anchor, out_dir, proto_key, scale, droop, rng
     for f in faces_local:
         faces.append((base + f[0], base + f[1], base + f[2]))
         uvs.extend([pt_uvs[f[0]], pt_uvs[f[1]], pt_uvs[f[2]]])
+        if rands is not None:
+            # 独立的确定性哈希，绝不消耗主随机流，保证几何与加属性前完全一致
+            rands.append((((len(faces) + 1) * 2654435761) % 10007) / 10007.0)
     return len(faces_local)
 
 
@@ -322,7 +322,8 @@ def _attach_points(spec, branch_pts, twig_pts, rng, l1_count=0):
     return points
 
 
-def _new_object(name, verts, faces, uvs, collection, material):
+def _new_object(name, verts, faces, uvs, collection, material, face_attr=None,
+                attr_name="leaf_rand"):
     mesh = bpy.data.meshes.new(name)
     mesh.from_pydata([tuple(v) for v in verts], [], faces)
     mesh.validate()
@@ -333,6 +334,10 @@ def _new_object(name, verts, faces, uvs, collection, material):
     for poly in mesh.polygons:
         for li in poly.loop_indices:
             layer.data[li].uv = uvs[li]
+    if face_attr is not None:
+        # 逐叶片随机数，供程序化材质打散，避免每片叶子长得一样
+        attr = mesh.attributes.new(attr_name, 'FLOAT', 'FACE')
+        attr.data.foreach_set("value", face_attr)
     collection.objects.link(obj)
     return obj
 
@@ -341,7 +346,6 @@ def build(spec, name="Tree_Birch", origin=(0.0, 0.0, 0.0), collection=None):
     rng = random.Random(spec["seed"])
     if collection is None:
         collection = bpy.context.scene.collection
-    mat_bark, mat_leaf = _ensure_materials()
 
     origin_v = Vector(origin)
     spine = _trunk_spine(spec, rng)
@@ -349,6 +353,7 @@ def build(spec, name="Tree_Birch", origin=(0.0, 0.0, 0.0), collection=None):
     gravity = spec.get("droop", 1.0)
     # 树皮 UV 归一：主干基部的环向周长正好占满贴图 U 0–1，枝干沿用同一密度（可重叠）
     bark_uv = 1.0 / (TAU * (tr["base_radius"] + tr["top_radius"]))
+    mat_bark, mat_leaf = _ensure_materials(spec, bark_uv)
 
     trunk_v, trunk_f, trunk_uv = _trunk_mesh(spine, origin_v, tr["sides"], bark_uv)
 
@@ -428,6 +433,7 @@ def build(spec, name="Tree_Birch", origin=(0.0, 0.0, 0.0), collection=None):
     attach = _attach_points(spec, branch_chains, twig_chains, rng, l1_count=l1["count"])
 
     leaf_v, leaf_f, leaf_uv = [], [], []
+    leaf_rand = []
     leaf = spec["leaf"]
     proto_cycle = list(leaf["prototypes"])
     season_factor = spec["season"]["leaf_factor"]
@@ -458,7 +464,8 @@ def build(spec, name="Tree_Birch", origin=(0.0, 0.0, 0.0), collection=None):
             jitter *= leaf["cluster_spread"] * rng.random()
             droop = gravity * (1.25 if is_tip else 1.0)
             _place_leaf(leaf_v, leaf_f, leaf_uv, p + jitter, out, proto,
-                        leaf["scale"] * rng.uniform(0.85, 1.15), droop, rng, single_tri)
+                        leaf["scale"] * rng.uniform(0.85, 1.15), droop, rng, single_tri,
+                        rands=leaf_rand)
             leaf_total += 1
         ci += 1
 
@@ -466,7 +473,8 @@ def build(spec, name="Tree_Birch", origin=(0.0, 0.0, 0.0), collection=None):
         "trunk": _new_object(f"{name}_Trunk", trunk_v, trunk_f, trunk_uv, collection, mat_bark),
         "branches": _new_object(f"{name}_Branches", branch_v, branch_f, branch_uv, collection, mat_bark),
         "twigs": _new_object(f"{name}_Twigs", twig_v, twig_f, twig_uv, collection, mat_bark),
-        "leaves": _new_object(f"{name}_Leaves", leaf_v, leaf_f, leaf_uv, collection, mat_leaf),
+        "leaves": _new_object(f"{name}_Leaves", leaf_v, leaf_f, leaf_uv, collection,
+                              mat_leaf, face_attr=leaf_rand),
     }
     report = {
         "trunk_tri": len(trunk_f),
@@ -485,38 +493,258 @@ def build(spec, name="Tree_Birch", origin=(0.0, 0.0, 0.0), collection=None):
     return objs, report
 
 
-def _new_material(name, roughness, stem):
-    mat = bpy.data.materials.get(name)
-    if mat is None:
-        mat = bpy.data.materials.new(name)
-        mat.use_nodes = True
-        nt = mat.node_tree
-        bsdf = nt.nodes.get("Principled BSDF")
-        if bsdf:
-            bsdf.inputs["Base Color"].default_value = (0.8, 0.8, 0.8, 1.0)
-            bsdf.inputs["Roughness"].default_value = roughness
-            bsdf.inputs["Metallic"].default_value = 0.0
-            color = os.path.join(TEX_DIR, "birch_%s_color.png" % stem)
-            normal = os.path.join(TEX_DIR, "birch_%s_normal.png" % stem)
-            if os.path.exists(color):
-                tex = nt.nodes.new("ShaderNodeTexImage")
-                tex.image = bpy.data.images.load(color, check_existing=True)
-                nt.links.new(tex.outputs["Color"], bsdf.inputs["Base Color"])
-            if os.path.exists(normal):
-                ntex = nt.nodes.new("ShaderNodeTexImage")
-                img = bpy.data.images.load(normal, check_existing=True)
-                img.colorspace_settings.name = 'Non-Color'
-                ntex.image = img
-                nmap = nt.nodes.new("ShaderNodeNormalMap")
-                nt.links.new(ntex.outputs["Color"], nmap.inputs["Color"])
-                nt.links.new(nmap.outputs["Normal"], bsdf.inputs["Normal"])
+MATERIAL_DEFAULTS = {
+    "bark": {
+        "roughness": 0.9,
+        "base": [0.68, 0.672, 0.653],
+        "mottle": 0.075,
+        "grain": 0.015,
+        "lenticels": {"rows_per_m": 85.0, "dash_m": 0.04, "strength": 1.45},
+        "cracks": {"per_m": 18.0, "strength": 0.35, "width": 0.005},
+        "bump": {"strength": 0.6, "distance_m": 0.003},
+        "dark": [0.032, 0.028, 0.024],
+    },
+    "leaf": {
+        "roughness": 0.6,
+        "deep": [0.105, 0.245, 0.034],
+        "pale": [0.195, 0.365, 0.058],
+        "midrib": 0.2,
+        "per_leaf": 6.0,
+        "bump": {"strength": 0.5, "distance_m": 0.0015},
+    },
+}
+
+
+def _feed(nt, sock, value):
+    if hasattr(value, "links"):
+        nt.links.new(value, sock)
+    elif isinstance(value, (tuple, list)):
+        sock.default_value = (value[0], value[1], value[2], 1.0)
+    else:
+        sock.default_value = value
+
+
+def _node(nt, kind, loc, label=None):
+    n = nt.nodes.new(kind)
+    n.location = loc
+    if label:
+        n.label = label
+    return n
+
+
+def _math(nt, op, a, b, loc, label=None):
+    n = _node(nt, "ShaderNodeMath", loc, label)
+    n.operation = op
+    _feed(nt, n.inputs[0], a)
+    if b is not None:
+        _feed(nt, n.inputs[1], b)
+    return n
+
+
+def _ramp(nt, stops, loc, label, constant=False):
+    n = _node(nt, "ShaderNodeValToRGB", loc, label)
+    n.color_ramp.interpolation = 'CONSTANT' if constant else 'LINEAR'
+    elems = n.color_ramp.elements
+    while len(elems) > len(stops):
+        elems.remove(elems[-1])
+    while len(elems) < len(stops):
+        elems.new(0.5)
+    for elem, (pos, value) in zip(elems, stops):
+        elem.position = pos
+        elem.color = (value, value, value, 1.0)
+    return n
+
+
+def _mix_rgb(nt, factor, color_a, color_b, loc, label):
+    n = _node(nt, "ShaderNodeMix", loc, label)
+    n.data_type = 'RGBA'
+    n.blend_type = 'MIX'
+    for sock in n.inputs:
+        if sock.name == 'A' and sock.type == 'RGBA':
+            _feed(nt, sock, color_a)
+        elif sock.name == 'B' and sock.type == 'RGBA':
+            _feed(nt, sock, color_b)
+    _feed(nt, n.inputs[0], factor)
+    return n
+
+
+def _noise(nt, vector, scale, detail, loc, w=None, rough=0.55):
+    n = _node(nt, "ShaderNodeTexNoise", loc)
+    n.inputs["Scale"].default_value = scale
+    n.inputs["Detail"].default_value = detail
+    n.inputs["Roughness"].default_value = rough
+    if w is not None:
+        n.noise_dimensions = '4D'
+        _feed(nt, n.inputs["W"], w)
+    nt.links.new(vector, n.inputs["Vector"])
+    return n
+
+
+def _mapping(nt, vector, scale, loc):
+    n = _node(nt, "ShaderNodeMapping", loc)
+    n.inputs["Scale"].default_value = scale
+    nt.links.new(vector, n.inputs["Vector"])
+    return n
+
+
+def _bark_material(mat, conf, uv_per_m):
+    """程序化白桦树皮：横向皮孔 + 纵向裂纹 + 灰白浓淡，无贴图。"""
+    nt = mat.node_tree
+    nt.nodes.clear()
+    out = _node(nt, "ShaderNodeOutputMaterial", (1100, 0))
+    bsdf = _node(nt, "ShaderNodeBsdfPrincipled", (860, 0))
+    bsdf.inputs["Roughness"].default_value = conf["roughness"]
+    bsdf.inputs["Metallic"].default_value = 0.0
+    nt.links.new(bsdf.outputs["BSDF"], out.inputs["Surface"])
+    tc = _node(nt, "ShaderNodeTexCoord", (-1500, 0))
+    uv = tc.outputs["UV"]
+
+    # 树皮 UV 每单位 = 1/uv_per_m 米，所有频率按米换算
+    mottle = _noise(nt, uv, 26.0, 4.0, (-1200, 320))
+    grain = _noise(nt, uv, 150.0, 2.0, (-1200, 140))
+
+    rows_uv = conf["lenticels"]["rows_per_m"] / uv_per_m
+    wave = _node(nt, "ShaderNodeTexWave", (-1200, -60))
+    wave.wave_type = 'BANDS'
+    wave.bands_direction = 'Y'
+    wave.inputs["Scale"].default_value = rows_uv
+    wave.inputs["Distortion"].default_value = 0.6
+    wave.inputs["Detail"].default_value = 2.0
+    nt.links.new(uv, wave.inputs["Vector"])
+    band = _ramp(nt, [(0.72, 0.0), (0.88, 1.0)], (-960, -60), "Rows")
+    nt.links.new(wave.outputs["Fac"], band.inputs[0])
+
+    dash_len_uv = conf["lenticels"]["dash_m"] * uv_per_m
+    dash_map = _mapping(nt, uv, (1.0, 2.5, 1.0), (-1200, -260))
+    dash_n = _noise(nt, dash_map.outputs["Vector"], 1.0 / max(dash_len_uv, 1e-4), 3.0,
+                    (-960, -260))
+    dash = _ramp(nt, [(0.58, 0.0), (0.63, 1.0)], (-760, -260), "Dashes")
+    nt.links.new(dash_n.outputs["Fac"], dash.inputs[0])
+    lent = _math(nt, 'MULTIPLY', band.outputs["Color"], dash.outputs["Color"],
+                 (-560, -160), "Lenticels")
+    lent_c = _node(nt, "ShaderNodeClamp", (-400, -160))
+    _feed(nt, lent_c.inputs[0], _math(nt, 'MULTIPLY', lent.outputs[0],
+                                      conf["lenticels"]["strength"], (-470, -320)).outputs[0])
+
+    per_uv = conf["cracks"]["per_m"] / uv_per_m
+    crack_map = _mapping(nt, uv, (per_uv, 0.3, 1.0), (-1200, -520))
+    crack_n = _noise(nt, crack_map.outputs["Vector"], 1.0, 6.0, (-960, -520))
+    centre = _math(nt, 'SUBTRACT', crack_n.outputs["Fac"], 0.5, (-760, -520))
+    offset = _math(nt, 'ABSOLUTE', centre.outputs[0], None, (-600, -520))
+    line = _math(nt, 'LESS_THAN', offset.outputs[0], conf["cracks"]["width"], (-440, -520))
+    fade_n = _noise(nt, uv, 2.5, 3.0, (-960, -700))
+    fade = _ramp(nt, [(0.40, 0.0), (0.52, 1.0)], (-760, -700), "CrackFade")
+    nt.links.new(fade_n.outputs["Fac"], fade.inputs[0])
+    crack = _math(nt, 'MULTIPLY', line.outputs[0], fade.outputs["Color"], (-280, -560))
+
+    grey = _math(nt, 'MULTIPLY', mottle.outputs["Fac"], conf["mottle"], (-960, 320))
+    grey = _math(nt, 'ADD', grey.outputs[0],
+                 _math(nt, 'MULTIPLY', grain.outputs["Fac"], conf["grain"],
+                       (-960, 200)).outputs[0], (-780, 300), "Grey")
+    grey = _math(nt, 'ADD', grey.outputs[0], 0.68, (-620, 300))
+    col = _mix_rgb(nt, grey.outputs[0], (0.0, 0.0, 0.0), conf["base"], (-420, 320),
+                   "BarkBase")
+    col = _mix_rgb(nt, _math(nt, 'MULTIPLY', crack.outputs[0], conf["cracks"]["strength"],
+                             (-280, 260)).outputs[0], col.outputs[2], (0.0, 0.0, 0.0),
+                   (-200, 320), "CrackDark")
+    col = _mix_rgb(nt, lent_c.outputs[0], col.outputs[2], conf["dark"], (20, 300),
+                   "LenticelDark")
+    nt.links.new(col.outputs[2], bsdf.inputs["Base Color"])
+
+    h = _math(nt, 'MULTIPLY', grain.outputs["Fac"], 0.25, (-960, -900))
+    h = _math(nt, 'SUBTRACT', h.outputs[0],
+              _math(nt, 'MULTIPLY', crack.outputs[0], 0.75, (-780, -980)).outputs[0],
+              (-620, -900))
+    h = _math(nt, 'SUBTRACT', h.outputs[0],
+              _math(nt, 'MULTIPLY', lent_c.outputs[0], 0.55, (-620, -1080)).outputs[0],
+              (-460, -900))
+    h = _math(nt, 'ADD', h.outputs[0],
+              _math(nt, 'MULTIPLY', mottle.outputs["Fac"], 0.06, (-620, -1180)).outputs[0],
+              (-300, -900))
+    bump = _node(nt, "ShaderNodeBump", (600, -300))
+    bump.inputs["Strength"].default_value = conf["bump"]["strength"]
+    bump.inputs["Distance"].default_value = conf["bump"]["distance_m"]
+    nt.links.new(h.outputs[0], bump.inputs["Height"])
+    nt.links.new(bump.outputs["Normal"], bsdf.inputs["Normal"])
     return mat
 
 
-def _ensure_materials():
-    """树皮与叶片两套材质：贴图由 gen_tex.py 生成，粗糙度走常数。"""
-    return (_new_material("MAT_Birch_Bark", 0.9, "bark"),
-            _new_material("MAT_Birch_Leaf", 0.6, "leaf"))
+def _leaf_material(mat, conf):
+    """程序化叶片：深浅绿随机过渡 + 主脉压暗；逐叶片随机数打散重复。"""
+    nt = mat.node_tree
+    nt.nodes.clear()
+    out = _node(nt, "ShaderNodeOutputMaterial", (1100, 0))
+    bsdf = _node(nt, "ShaderNodeBsdfPrincipled", (860, 0))
+    bsdf.inputs["Roughness"].default_value = conf["roughness"]
+    bsdf.inputs["Metallic"].default_value = 0.0
+    nt.links.new(bsdf.outputs["BSDF"], out.inputs["Surface"])
+    tc = _node(nt, "ShaderNodeTexCoord", (-1400, 0))
+    uv = tc.outputs["UV"]
+
+    attr = _node(nt, "ShaderNodeAttribute", (-1400, -260))
+    attr.attribute_type = 'GEOMETRY'
+    attr.attribute_name = "leaf_rand"
+    w = _math(nt, 'MULTIPLY', attr.outputs["Fac"], conf["per_leaf"], (-1200, -260))
+    n = _noise(nt, uv, 5.0, 4.0, (-1000, 120), w=w.outputs[0], rough=0.6)
+
+    span = _node(nt, "ShaderNodeMapRange", (-780, 120))
+    span.inputs["From Min"].default_value = 0.30
+    span.inputs["From Max"].default_value = 0.70
+    span.inputs["To Min"].default_value = 0.0
+    span.inputs["To Max"].default_value = 1.0
+    nt.links.new(n.outputs["Fac"], span.inputs["Value"])
+
+    col = _mix_rgb(nt, span.outputs[0], conf["deep"], conf["pale"], (-540, 160),
+                   "LeafTone")
+
+    sep = _node(nt, "ShaderNodeSeparateXYZ", (-1200, -420))
+    nt.links.new(uv, sep.inputs["Vector"])
+    dx = _math(nt, 'SUBTRACT', sep.outputs["X"], 0.5, (-1000, -420))
+    dx = _math(nt, 'ABSOLUTE', dx.outputs[0], None, (-860, -420))
+    mid = _ramp(nt, [(0.0, 1.0), (0.018, 0.0)], (-700, -420), "Midrib")
+    nt.links.new(dx.outputs[0], mid.inputs[0])
+    shade = _math(nt, 'MULTIPLY', mid.outputs["Color"], conf["midrib"], (-540, -420))
+    col = _mix_rgb(nt, shade.outputs[0], col.outputs[2], (0.0, 0.0, 0.0), (-320, 120),
+                   "MidribDark")
+
+    # 逐叶明度抖动：让同一片树冠里的叶子不重样
+    tone = _math(nt, 'MULTIPLY', attr.outputs["Fac"], 0.35, (-540, -120))
+    col = _mix_rgb(nt, tone.outputs[0], col.outputs[2], conf["pale"], (-120, 160),
+                   "LeafVary")
+    nt.links.new(col.outputs[2], bsdf.inputs["Base Color"])
+
+    h = _math(nt, 'MULTIPLY', n.outputs["Fac"], 0.55, (-320, -560))
+    h = _math(nt, 'SUBTRACT', h.outputs[0],
+              _math(nt, 'MULTIPLY', mid.outputs["Color"], 0.35, (-540, -700)).outputs[0],
+              (-160, -560))
+    bump = _node(nt, "ShaderNodeBump", (600, -320))
+    bump.inputs["Strength"].default_value = conf["bump"]["strength"]
+    bump.inputs["Distance"].default_value = conf["bump"]["distance_m"]
+    nt.links.new(h.outputs[0], bump.inputs["Height"])
+    nt.links.new(bump.outputs["Normal"], bsdf.inputs["Normal"])
+    return mat
+
+
+def _ensure_materials(spec, uv_per_m):
+    """树皮与叶片两套程序化材质，无贴图文件；粗糙度走常量。"""
+    conf = spec.get("material") or {}
+    bark = dict(MATERIAL_DEFAULTS["bark"])
+    bark.update(conf.get("bark") or {})
+    leaf = dict(MATERIAL_DEFAULTS["leaf"])
+    leaf.update(conf.get("leaf") or {})
+
+    mat_bark = bpy.data.materials.get("MAT_Birch_Bark")
+    if mat_bark is None:
+        mat_bark = bpy.data.materials.new("MAT_Birch_Bark")
+        mat_bark.use_nodes = True
+    _bark_material(mat_bark, bark, uv_per_m)
+
+    mat_leaf = bpy.data.materials.get("MAT_Birch_Leaf")
+    if mat_leaf is None:
+        mat_leaf = bpy.data.materials.new("MAT_Birch_Leaf")
+        mat_leaf.use_nodes = True
+    _leaf_material(mat_leaf, leaf)
+    return mat_bark, mat_leaf
 
 
 def ensure_collection(name):

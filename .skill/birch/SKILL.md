@@ -12,14 +12,18 @@ description: "白桦树生成器：按 preset 参数在 Blender 里生成枝干�
 - 要调整茂密度（`canopy`）或季相（`season`）
 - 要把一套树木参数固化成可复现的 preset
 
-不负责材质贴图、地形摆放、渲染风格。
+不负责地形摆放与渲染风格；材质由生成器内置的程序化节点自动挂载。
 
 ## 文件
 
 | 文件 | 作用 |
 |---|---|
-| `scripts/treegen.py` | 生成器本体，纯 `bpy`，确定性 |
-| `presets/birch.json` | 白桦标准参数（定版默认） |
+| `scripts/treegen.py` | 生成器本体 + 程序化树皮/叶片材质，纯 `bpy`，确定性 |
+| `scripts/preview.py` | 批处理直出：生成 + 环境光 + 参考人 + 渲染 |
+| `presets/birch.json` | 白桦标准参数 + 材质配方（定版默认） |
+| `presets/birch_winter.json` | 冬季季相（叶量 0.6） |
+
+材质由节点实时计算，**技能内不含任何贴图文件**。
 
 ## 运行
 
@@ -84,8 +88,22 @@ objs, report = treegen.build(spec, name="Tree_Birch", collection=treegen.ensure_
 | `variation.seed_stride` | 顶层 | 多棵生成时每棵的 seed 步长 |
 | `variation.height` | 顶层 | 每棵高度随机浮动比例（0.10 = ±10%） |
 | `variation.branch_count` | 顶层 | 每棵一级枝数量向下抖动幅度，保证不破 1000 面 |
+| `material.bark.*` | 顶层 | 树皮配方：底色 `base`、浓淡 `mottle`/`grain`、皮孔 `lenticels`、裂纹 `cracks`、`bump` |
+| `material.leaf.*` | 顶层 | 叶片配方：`deep`/`pale` 双绿、主脉压暗 `midrib`、逐叶随机强度 `per_leaf` |
 
 实际叶面数 = `leaf_max_tri × canopy × season.leaf_factor`，脚本按此预算逐簇累加，超出前停止。
+
+## 材质（程序化，无贴图）
+
+- `MAT_Birch_Bark` / `MAT_Birch_Leaf` 由 `_ensure_materials(spec, bark_uv)` 现场构建，节点树里没有 `TEX_IMAGE`
+- 树皮三层，全部按物理尺度换算（`bark_uv` 把环向周长归一，配方里的 `rows_per_m` / `per_m` / `dash_m` 是米制）：
+  - 横向皮孔：`Wave(BANDS, Y)` 造行距 → `Noise` 高频在 U 上切断成短横条 → 混向近黑
+  - 纵向裂纹：`Noise` 经 `Mapping` 在 U 上放大、V 上压扁 → `abs(f-0.5) < width` 取脊线，再乘低频遮罩做成断续
+  - 灰白浓淡：中频 `Noise` 调制底色，`base` 为线性 RGB
+- 叶片：4D `Noise` 取深浅绿过渡，`UV.x` 距 0.5 的距离出主脉并压暗
+- 逐叶片随机：生成时给叶片网格写入面属性 `leaf_rand`（每片一个 0–1 随机数），材质用 `Attribute` 节点同时驱动噪声 W 与明度抖动，避免每片叶子一模一样
+- 粗糙度走常量（树皮 0.9 / 叶 0.6），凹凸由 `Bump` 从同一套高度场生成
+
 
 ## 茂密度五档
 
@@ -128,6 +146,7 @@ results = treegen.spawn_variants(spec, count=5, spacing=2.4, x0=-4.8)
 
 - 全部三角面
 - 主干 5 边、次枝 3 边
+- 材质必须程序化：不得引入 `TEX_IMAGE`，不得依赖 `textures/` 里的文件
 - 叶片禁止朝天：生成后法线 `z > 0.25` 会被翻转，隔离校验口径是 `normal.z > 0.3` 的面数应为 0
 - 主干不挂叶，叶片只挂次级枝与细枝挂点；细枝仅参与挂点计算，不生成几何
 - 枝干面数超 `branch_max_tri` 抛 `RuntimeError`，不静默截断
@@ -144,3 +163,6 @@ results = treegen.spawn_variants(spec, count=5, spacing=2.4, x0=-4.8)
 - 目前只有白桦一个树种；其他树种需新增 preset 并在 `treegen.py` 里加形态特化
 - 叶片为单层面片，渲染背面偏暗，属白模阶段预期
 - 树冠密度由预算驱动，不看真实叶面积
+- 树皮 U 为环向弧长，程序化噪声在 U 回环处有一条竖缝（已确认可接受，未做 mirror UV）
+- 程序化噪声不带 mipmap，远距离或 VR 斜视角下细皮孔可能闪烁
+- 旧树（本改动之前生成的）没有 `leaf_rand` 面属性，材质会把逐叶随机退化成常量，需要重新生成或补写属性

@@ -20,7 +20,7 @@
       "pitch_deg": [22, 46],
       "sides": 3,
       "segments": 3,
-      "len_ratio": 0.54,
+      "len_ratio": 0.46,
       "radius_ratio": 0.34
     },
     "level2": {
@@ -39,13 +39,14 @@
     "width": 0.011
   },
   "leaf": {
-    "prototypes": ["P01", "P01", "P02", "P01"],
+    "prototypes": ["C5", "T3", "T3", "P01", "C7"],
     "scale": 1.0,
-    "per_cluster": 2,
+    "single_tri": false,
+    "per_cluster": 1,
     "cluster_spread": 0.06,
     "attach": {
-      "branch": 6,
-      "twig": 8
+      "branch": 14,
+      "twig": 22
     }
   },
   "season": {

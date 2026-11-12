@@ -60,7 +60,6 @@ blender -b --factory-startup --python ".skills/birch/scripts/preview.py" -- --pr
 .skills/STARTER/
 ├── SKILL.md                       向导主流程
 ├── assets/
-│   ├── ref_human.blend            1.8m 人形比例参照
 │   └── qwantani_noon_puresky_1k.exr  Poly Haven 正午晴空环境 HDRI
 └── references/
     ├── AGENTS_TEMPLATE.md         带占位符的模板与填写对照

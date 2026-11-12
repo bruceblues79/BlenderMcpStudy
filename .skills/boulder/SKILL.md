@@ -188,7 +188,7 @@ bm, points = bouldergen.build_one(p, budget={"min_tri": 90, "max_tri": 150})
 2. `total_tri` 与每块面数落在预算区间
 3. 断口数量 = 1 主 + 最多 1 崩角，近景看不到薄片状挤出
 4. `bounds` 里相邻块 X 间隙等于 `gap_m`，`overlap` 为空
-5. 要比例参照时 append `.skills/STARTER/assets/ref_human.blend` 的 `ref_human`（1.8m）
+5. 要比例参照时在原点生成 `ref_human_box`：底面 `0.5×0.5` 米、高 `1.8` 米，底面位于 z=0
 6. 预览按项目规范：EEVEE + `W_FarField` 环境、不加灯、Film Transparent 开；视窗 24mm / Material Preview / Scene World / 叠加层开；截图用 `viewshot.py`
 7. 命名 `TheFarField_<内容>_YYMMDDHHMM.blend` 存 `scenes/`，预览存 `previews/`
 8. 材质验收：每块都有 `uv_layers["UVMap"]`，UV 跨度 = 尺寸 / `uv_tile_m`；节点里没有 `ShaderNodeTexImage`；`Base Color` 与 `Normal` 有连线；`Roughness` 是常量且未连线

@@ -38,13 +38,9 @@ env = nt.nodes.new("ShaderNodeTexEnvironment")
 env.image = bpy.data.images.load(os.path.join(ROOT, ".skills", "STARTER", "assets", "qwantani_noon_puresky_1k.exr"))
 nt.links.new(env.outputs["Color"], bg.inputs["Color"])
 
-with bpy.data.libraries.load(os.path.join(ROOT, ".skills", "STARTER", "assets", "ref_human.blend"), link=False) as (src, dst):
-    dst.collections = list(src.collections)
-for coll in dst.collections:
-    scene.collection.children.link(coll)
-for obj in bpy.data.objects:
-    if obj.name.startswith("ref_human"):
-        obj.location = (-2.2, 1.6, 0.0)
+bpy.ops.mesh.primitive_cube_add(size=1.0, location=(-2.2, 1.6, 0.9))
+bpy.context.active_object.name = "ref_human_box"
+bpy.context.active_object.scale = (0.5, 0.5, 1.8)
 
 def gray_mat(name, value):
     m = bpy.data.materials.new(name)

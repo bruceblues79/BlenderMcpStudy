@@ -92,7 +92,7 @@ objs, report = groundgen.build(spec, collection=groundgen.ensure_collection("Gro
 blender -b --factory-startup --python .skills/ground/scripts/preview.py -- --preset ground_plateau_moss
 ```
 
-预览规格：EEVEE、24mm、45° 俯视、`qwantani_noon_puresky_1k.exr` 环境、Film Transparent、含 `ref_human` 与灰色背板。
+预览规格：EEVEE、24mm、45° 俯视、`qwantani_noon_puresky_1k.exr` 环境、Film Transparent、含 `ref_human_box` 与灰色背板。
 
 ## 文件
 

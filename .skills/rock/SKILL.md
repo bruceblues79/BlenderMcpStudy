@@ -31,7 +31,7 @@ description: "石块生成器：按 preset 参数在 Blender 里生成低面数�
 在项目根目录执行：
 
 ```
-blender -b --factory-startup --python ".skill/rock/scripts/preview.py" -- --preset rock
+blender -b --factory-startup --python ".skills/rock/scripts/preview.py" -- --preset rock
 ```
 
 - 默认输出 `previews/TheFarField_rock_placement_rock.png`（脚本按自身位置推算项目根，不受 cwd 影响）
@@ -43,7 +43,7 @@ blender -b --factory-startup --python ".skill/rock/scripts/preview.py" -- --pres
 
 ```python
 import sys, os
-SKILL = r"c:\Users\bruce\Documents\BlenderProjects\BlenderMcpStudy\.skill\rock"
+SKILL = r"c:\Users\bruce\Documents\BlenderProjects\BlenderMcpStudy\.skills\rock"
 sys.path.insert(0, os.path.join(SKILL, "scripts"))
 import rockgen
 
@@ -119,7 +119,7 @@ report = rockgen.main(os.path.join(SKILL, "presets", "rock.json"), collection_na
 `presets/rock.json` 就是定版默认值（用户 2026-11-11 认可的七种石块），用户说“生成石块”时直接跑，不再逐项确认：
 
 ```
-blender -b --factory-startup --python .skill/rock/scripts/preview.py -- --preset rock
+blender -b --factory-startup --python .skills/rock/scripts/preview.py -- --preset rock
 ```
 
 默认行为：生成 → 打环境光 → 摆参考人 → 渲染 `previews/TheFarField_rock_placement_<preset>.png` → 退出 Blender。
@@ -141,7 +141,7 @@ objs, report = rockgen.spawn_variants(spec, count=7, spacing=0.75, x0=-2.1, y=-6
 
 ## UV 与材质
 
-- UV 在生成器内写入，与 `.skill/birch` 的做法一致：不依赖智能展开，不事后补 UV
+- UV 在生成器内写入，与 `.skills/birch` 的做法一致：不依赖智能展开，不事后补 UV
 - 盒式投影：每个面按法线主导轴（X/Y/Z 中绝对值最大者）投影到平面，UV 直接取该面顶点的真实米数除以 `uv_tile_m`
 - 结果：配方固定覆盖 0.5m×0.5m，块石越大纹理重复次数越多，不同尺寸石块矿粒密度一致
 - 材质 `MAT_Rock_Granite` 全程序化，**不读任何图片**：`ShaderNodeTexCoord` 取 UV → 噪声/Voronoi → 颜色混合 → `Bump`

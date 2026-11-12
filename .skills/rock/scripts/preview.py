@@ -48,10 +48,10 @@ world.use_nodes = True
 nt = world.node_tree
 bg = nt.nodes.get("Background")
 env = nt.nodes.new("ShaderNodeTexEnvironment")
-env.image = bpy.data.images.load(os.path.join(ROOT, ".skill", "STARTER", "assets", "qwantani_noon_puresky_1k.exr"))
+env.image = bpy.data.images.load(os.path.join(ROOT, ".skills", "STARTER", "assets", "qwantani_noon_puresky_1k.exr"))
 nt.links.new(env.outputs["Color"], bg.inputs["Color"])
 
-with bpy.data.libraries.load(os.path.join(ROOT, ".skill", "STARTER", "assets", "ref_human.blend"), link=False) as (src, dst):
+with bpy.data.libraries.load(os.path.join(ROOT, ".skills", "STARTER", "assets", "ref_human.blend"), link=False) as (src, dst):
     dst.collections = list(src.collections)
 for coll in dst.collections:
     scene.collection.children.link(coll)

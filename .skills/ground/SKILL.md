@@ -79,17 +79,17 @@ material.bump.*           五层法线：中尺度隆起 / 微观颗粒 / 叶片
 
 ```python
 import sys
-sys.path.insert(0, ".skill/ground/scripts")
+sys.path.insert(0, ".skills/ground/scripts")
 import groundgen
 
-spec = groundgen.load_spec(".skill/ground/presets/ground_plateau_moss.json")
+spec = groundgen.load_spec(".skills/ground/presets/ground_plateau_moss.json")
 objs, report = groundgen.build(spec, collection=groundgen.ensure_collection("Ground"))
 ```
 
 命令行出预览（不保存 .blend）：
 
 ```
-blender -b --factory-startup --python .skill/ground/scripts/preview.py -- --preset ground_plateau_moss
+blender -b --factory-startup --python .skills/ground/scripts/preview.py -- --preset ground_plateau_moss
 ```
 
 预览规格：EEVEE、24mm、45° 俯视、`qwantani_noon_puresky_1k.exr` 环境、Film Transparent、含 `ref_human` 与灰色背板。
@@ -97,7 +97,7 @@ blender -b --factory-startup --python .skill/ground/scripts/preview.py -- --pres
 ## 文件
 
 ```
-.skill/ground/
+.skills/ground/
 ├── SKILL.md
 ├── presets/ground_plateau_moss.json
 └── scripts/

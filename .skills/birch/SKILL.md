@@ -32,7 +32,7 @@ description: "白桦树生成器：按 preset 参数在 Blender 里生成枝干�
 在项目根目录执行：
 
 ```
-blender -b --factory-startup --python ".skill/birch/scripts/preview.py" -- --preset birch
+blender -b --factory-startup --python ".skills/birch/scripts/preview.py" -- --preset birch
 ```
 
 - 默认输出 `previews/TheFarField_birch_default_birch.png`（脚本按自身位置推算项目根，不受 cwd 影响）
@@ -44,7 +44,7 @@ blender -b --factory-startup --python ".skill/birch/scripts/preview.py" -- --pre
 
 ```python
 import sys, os
-SKILL = r"c:\Users\bruce\Documents\BlenderProjects\BlenderMcpStudy\.skill\birch"
+SKILL = r"c:\Users\bruce\Documents\BlenderProjects\BlenderMcpStudy\.skills\birch"
 sys.path.insert(0, os.path.join(SKILL, "scripts"))
 import treegen
 
@@ -122,7 +122,7 @@ objs, report = treegen.build(spec, name="Tree_Birch", collection=treegen.ensure_
 `presets/birch.json` 就是定版默认值（用户 2026-11-10 认可的「标准白桦树」），用户说“生成一棵树”时直接跑，不再逐项确认：
 
 ```
-blender -b --factory-startup --python .skill/birch/scripts/preview.py -- --preset birch
+blender -b --factory-startup --python .skills/birch/scripts/preview.py -- --preset birch
 ```
 
 标准形态基线（改动后需重新对照）：主干 76 / 枝干 630 / 叶片 2200，合计 2906 三角面（总预算 3200）；一级枝 10 条，叶 880 片，树高约 5.7m。

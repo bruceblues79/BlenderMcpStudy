@@ -13,8 +13,8 @@ STARTER 把这些变成一次性的向导问答，产出确定的 `AGENTS.md`，
 ## 使用方法
 
 1. 安装依赖：`uvx mcp-for-blender setup`，并在 Blender 的 `Edit → Preferences → Add-ons` 启用 `Interface: MCP for Blender`
-2. 把本仓库的 `.skill/` 整个目录复制到你的 Blender 项目根目录
-3. 告诉 agent：读 `.skill/STARTER/SKILL.md` 并执行
+2. 把本仓库的 `.skills/` 整个目录复制到你的 Blender 项目根目录
+3. 告诉 agent：读 `.skills/STARTER/SKILL.md` 并执行
 4. 按向导逐项确认，每项都有默认值，可直接回"默认"
 
 ## 会产生什么效果
@@ -38,12 +38,12 @@ STARTER 把这些变成一次性的向导问答，产出确定的 `AGENTS.md`，
 
 ## 白桦树生成器（birch）
 
-`.skill/birch/` 是项目专属的程序化白桦树生成器：按 preset 在 Blender 里生成主干、分枝与叶簇，纯 `bpy` 实现，同一 `seed` 必然产出同一棵树。
+`.skills/birch/` 是项目专属的程序化白桦树生成器：按 preset 在 Blender 里生成主干、分枝与叶簇，纯 `bpy` 实现，同一 `seed` 必然产出同一棵树。
 
 一条命令直出预览，不保存 `.blend`，跑完自动退出 Blender：
 
 ```
-blender -b --factory-startup --python ".skill/birch/scripts/preview.py" -- --preset birch
+blender -b --factory-startup --python ".skills/birch/scripts/preview.py" -- --preset birch
 ```
 
 - 默认输出 `previews/TheFarField_birch_default_birch.png`
@@ -52,12 +52,12 @@ blender -b --factory-startup --python ".skill/birch/scripts/preview.py" -- --pre
 - 面数预算：枝干 1000 三角面内、叶片按 `canopy` 折算，单棵约 2900 面
 - 调形态只改 `presets/*.json`；只有结构要变（新树种、新分级）才动 `scripts/treegen.py`
 
-细节见 [`.skill/birch/SKILL.md`](.skill/birch/SKILL.md)。
+细节见 [`.skills/birch/SKILL.md`](.skills/birch/SKILL.md)。
 
 ## 目录结构
 
 ```
-.skill/STARTER/
+.skills/STARTER/
 ├── SKILL.md                       向导主流程
 ├── assets/
 │   ├── ref_human.blend            1.8m 人形比例参照
@@ -66,7 +66,7 @@ blender -b --factory-startup --python ".skill/birch/scripts/preview.py" -- --pre
     ├── AGENTS_TEMPLATE.md         带占位符的模板与填写对照
     └── MCP_SETUP.md               前置依赖、开工自检与跨平台启动
 
-.skill/birch/
+.skills/birch/
 ├── SKILL.md                       生成器说明与调用方式
 ├── presets/
 │   ├── birch.json                 夏季标准白桦默认参数

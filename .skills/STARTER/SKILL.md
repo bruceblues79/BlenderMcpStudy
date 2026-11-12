@@ -14,7 +14,7 @@ description: "为 Blender MCP 新项目生成 AGENTS.md 的向导：确认连接
 
 ## 第一步：环境就绪
 
-1. 建立 `scenes/`、`previews/`、`render/` 三个目录；环境光与参照资产直接引用 `.skill/STARTER/assets/` 下的原件，不复制到项目根目录
+1. 建立 `scenes/`、`previews/`、`render/` 三个目录；环境光与参照资产直接引用 `.skills/STARTER/assets/` 下的原件，不复制到项目根目录
 2. 读 `references/MCP_SETUP.md`
 3. 调 `get_addon_status` 确认 addon 在线；Blender 未运行时先探测可执行文件位置再自行拉起，然后重新验证
 4. 调 `get_scene_info` 确认当前文件与对象列表

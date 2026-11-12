@@ -5,8 +5,8 @@
 # 场景与资产不入库（由技能铺底）
 *.blend
 *.exr
-!.skill/STARTER/assets/ref_human.blend
-!.skill/STARTER/assets/qwantani_noon_puresky_1k.exr
+!.skills/STARTER/assets/ref_human.blend
+!.skills/STARTER/assets/qwantani_noon_puresky_1k.exr
 
 # 产出目录
 scenes/

@@ -37,7 +37,7 @@
 - `previews/`：视窗预览截图，用于快速确认形态与比例，git 不负责追踪管理。
 - `render/`：最终渲染成图，用于交付确认，git 不负责追踪管理。
 - `.screenshots/`：工具自动截图，仅本地保留，git 不负责追踪管理。
-- `.skills/STARTER/assets/`：参照资产原件（`ref_human.blend`、`qwantani_noon_puresky_1k.exr`），场景直接引用，不复制到项目根目录。
+- `.skills/STARTER/assets/`：参照资产原件（`qwantani_noon_puresky_1k.exr`），场景直接引用，不复制到项目根目录。
 
 ---
 
@@ -47,7 +47,7 @@
 |---|---|---|
 | `{{项目名}}` | `theme` | 同时用于文件命名，可自定义 |
 | `{{建模面}}` | 三角面（四边面次选） | 也可改为仅四边面 |
-| `{{比例参照}}` | Append `.skills/STARTER/assets/ref_human.blend` 中的 `ref_human` 合集到场景内 | 可选 1m 立方体 / 无 |
+| `{{比例参照}}` | 场景内生成占位方盒 `ref_human_box`：底面 `0.5×0.5` 米、高 `1.8` 米，底面位于 z=0、水平居中于世界原点，材质默认 Principled | 可选 Append 人形合集 / 1m 立方体 / 无 |
 | `{{比例折算}}` | 1:1 时写"真人高`1.8`米，按原尺寸放置" | 1:10 时写"真人高`1.8`米，按`1:10`折算为场景内`0.18`米" |
 | `{{渲染引擎}}` | eevee | 或 cycles |
 | `{{环境光}}` | `.\.skills\STARTER\assets\qwantani_noon_puresky_1k.exr` | 纯色 / 无 |

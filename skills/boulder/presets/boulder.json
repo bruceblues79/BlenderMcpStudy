@@ -1,0 +1,144 @@
+{
+  "kind": "boulder",
+  "budget": { "min_tri": 90, "max_tri": 150 },
+  "layout": { "gap_m": 0.62, "axis": "x" },
+  "material": {
+    "kind": "granite_cracked",
+    "name": "MAT_Boulder_GraniteCracked",
+    "uv_tile_m": 0.5,
+    "colors": {
+      "base": [0.260, 0.245, 0.226],
+      "light": [0.360, 0.340, 0.312],
+      "feldspar": [0.500, 0.482, 0.448],
+      "mica": [0.04, 0.038, 0.036],
+      "crack": [0.030, 0.028, 0.026]
+    },
+    "mottle": { "size_m": 0.45, "detail": 5 },
+    "grain": { "size_mm": 5.0, "feldspar": 0.26, "mica": 0.09 },
+    "weather": {
+      "grime": { "color": [0.090, 0.080, 0.062], "size_m": 0.32, "amount": 0.55, "lo": 0.40, "hi": 0.62 },
+      "streak": { "color": [0.070, 0.063, 0.052], "size_m": 0.22, "amount": 0.55, "lo": 0.34, "hi": 0.56, "stretch": 7.0 },
+      "stain": { "color": [0.330, 0.190, 0.095], "size_m": 0.28, "edge": 0.34, "amount": 0.50 },
+      "lichen": { "color": [0.430, 0.455, 0.370], "size_m": 0.10, "lo": 0.56, "hi": 0.64, "amount": 0.70, "sparse_m": 0.40, "sparse_lo": 0.36, "sparse_hi": 0.52 },
+      "dirt": { "color": [0.075, 0.064, 0.050], "height": 0.45, "amount": 0.85 }
+    },
+    "crack": {
+      "major_m": 1.15, "minor_m": 0.38, "width": 0.032, "depth": 0.9,
+      "minor_depth": 0.55, "break_m": 0.55, "break_lo": 0.36, "break_hi": 0.60
+    },
+    "bump": { "grain": 0.45, "coarse": 0.55, "coarse_m": 0.045, "crack": 1.6, "strength": 0.85, "distance_m": 0.0018 },
+    "roughness": 0.74,
+    "metallic": 0.0,
+    "specular": 0.5
+  },
+  "prototypes": [
+    {
+      "id": "B01",
+      "form": "slab",
+      "size": [1.80, 1.48, 0.80],
+      "embed": 0.16,
+      "points": 30,
+      "rough": 0.1,
+      "jitter": 0.03,
+      "top": 0.86,
+      "top_tilt": [0.1, -0.05],
+      "cuts": [
+        { "dir": [0.62, -0.72, 0.3], "frac": 0.3 },
+        { "dir": [-0.45, 0.75, 0.12], "frac": 0.09 }
+      ],
+      "seed": 1101
+    },
+    {
+      "id": "B02",
+      "form": "block",
+      "size": [1.54, 1.40, 1.28],
+      "embed": 0.14,
+      "points": 32,
+      "rough": 0.11,
+      "jitter": 0.028,
+      "top": null,
+      "cuts": [
+        { "dir": [0.18, -0.92, 0.34], "frac": 0.26 },
+        { "dir": [0.86, 0.4, -0.1], "frac": 0.1 }
+      ],
+      "seed": 1202
+    },
+    {
+      "id": "B03",
+      "form": "slab",
+      "size": [1.90, 1.66, 0.60],
+      "embed": 0.18,
+      "points": 30,
+      "rough": 0.1,
+      "jitter": 0.032,
+      "top": 0.9,
+      "top_tilt": [-0.08, 0.06],
+      "cuts": [
+        { "dir": [-0.75, -0.6, 0.28], "frac": 0.32 },
+        { "dir": [0.55, 0.78, 0.1], "frac": 0.08 }
+      ],
+      "seed": 1303
+    },
+    {
+      "id": "B04",
+      "form": "column",
+      "size": [1.22, 1.14, 1.60],
+      "embed": 0.04,
+      "points": 30,
+      "rough": 0.09,
+      "jitter": 0.026,
+      "top": null,
+      "cuts": [
+        { "dir": [0.7, -0.7, 0.2], "frac": 0.22 },
+        { "dir": [-0.5, 0.62, 0.52], "frac": 0.08 }
+      ],
+      "seed": 1404
+    },
+    {
+      "id": "B05",
+      "form": "block",
+      "size": [1.66, 1.38, 1.10],
+      "embed": 0.14,
+      "points": 32,
+      "rough": 0.11,
+      "jitter": 0.03,
+      "top": null,
+      "cuts": [
+        { "dir": [-0.6, -0.78, 0.2], "frac": 0.28 },
+        { "dir": [0.72, 0.55, 0.16], "frac": 0.1 }
+      ],
+      "seed": 1505
+    },
+    {
+      "id": "B06",
+      "form": "column",
+      "size": [1.32, 1.22, 1.60],
+      "embed": 0.04,
+      "points": 30,
+      "rough": 0.09,
+      "jitter": 0.026,
+      "top": 0.9,
+      "top_tilt": [0.05, 0.09],
+      "cuts": [
+        { "dir": [0.35, -0.9, 0.26], "frac": 0.24 },
+        { "dir": [-0.8, 0.4, 0.1], "frac": 0.09 }
+      ],
+      "seed": 1606
+    },
+    {
+      "id": "B07",
+      "form": "shard",
+      "size": [1.60, 1.50, 1.26],
+      "embed": 0.15,
+      "points": 34,
+      "rough": 0.11,
+      "jitter": 0.03,
+      "top": null,
+      "cuts": [
+        { "dir": [0.9, -0.4, 0.3], "frac": 0.3 },
+        { "dir": [-0.3, 0.85, 0.2], "frac": 0.11 }
+      ],
+      "seed": 1707
+    }
+  ]
+}

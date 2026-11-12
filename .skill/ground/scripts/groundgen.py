@@ -428,44 +428,90 @@ def build_material(spec):
     return mat
 
 
-def build(spec, name="Tile_Ground", collection=None, scene=None, location=(0.0, 0.0, 0.0)):
-    """创建单四边面地块并挂载程序化材质。"""
+def build(spec, name="Tile_Ground", collection=None, scene=None, location=(0.0, 0.0, 0.0),
+          rebuild_material=True):
+    """创建地块板体：顶面平坦 z=0，按 grid 分段，向下挤出厚度并封闭底面。"""
+    import bmesh
+
     scene = scene or bpy.context.scene
-    size = float(spec["tile"]["size_m"])
-    uv_per_m = float(spec["tile"].get("uv_per_m", 1.0))
-    h = size * 0.5
+    tile = spec["tile"]
+    size = float(tile["size_m"])
+    thickness = float(tile.get("thickness_m", 0.2))
+    uv_per_m = float(tile.get("uv_per_m", 1.0))
+    grid = max(1, int(tile.get("grid", 1)))
+    half = size * 0.5
+    step = size / grid
+
+    verts = []
+    top = {}
+    bot = {}
+    for j in range(grid + 1):
+        for i in range(grid + 1):
+            x = -half + step * i
+            y = -half + step * j
+            top[(i, j)] = len(verts)
+            verts.append((x, y, 0.0))
+    for j in range(grid + 1):
+        for i in range(grid + 1):
+            x = -half + step * i
+            y = -half + step * j
+            bot[(i, j)] = len(verts)
+            verts.append((x, y, -thickness))
+
+    faces = []
+    for j in range(grid):
+        for i in range(grid):
+            faces.append((top[(i, j)], top[(i + 1, j)], top[(i + 1, j + 1)]))
+            faces.append((top[(i, j)], top[(i + 1, j + 1)], top[(i, j + 1)]))
+            faces.append((bot[(i, j)], bot[(i + 1, j + 1)], bot[(i + 1, j)]))
+            faces.append((bot[(i, j)], bot[(i, j + 1)], bot[(i + 1, j + 1)]))
+    for i in range(grid):
+        faces.append((top[(i, 0)], bot[(i, 0)], bot[(i + 1, 0)]))
+        faces.append((top[(i, 0)], bot[(i + 1, 0)], top[(i + 1, 0)]))
+        faces.append((top[(i, grid)], top[(i + 1, grid)], bot[(i + 1, grid)]))
+        faces.append((top[(i, grid)], bot[(i + 1, grid)], bot[(i, grid)]))
+    for j in range(grid):
+        faces.append((top[(0, j)], top[(0, j + 1)], bot[(0, j + 1)]))
+        faces.append((top[(0, j)], bot[(0, j + 1)], bot[(0, j)]))
+        faces.append((top[(grid, j)], bot[(grid, j)], bot[(grid, j + 1)]))
+        faces.append((top[(grid, j)], bot[(grid, j + 1)], top[(grid, j + 1)]))
 
     me = bpy.data.meshes.new(name + "_Mesh")
-    me.from_pydata(
-        [(-h, -h, 0.0), (h, -h, 0.0), (h, h, 0.0), (-h, h, 0.0)],
-        [],
-        [(0, 1, 2, 3)],
-    )
+    me.from_pydata(verts, [], faces)
     me.update()
+
+    bm = bmesh.new()
+    bm.from_mesh(me)
+    bmesh.ops.recalc_face_normals(bm, faces=list(bm.faces))
+    bm.to_mesh(me)
+    bm.free()
 
     uv = me.uv_layers.new(name="UVMap")
     for loop in me.loops:
         v = me.vertices[loop.vertex_index].co
-        uv.data[loop.index].uv = ((v.x + h) * uv_per_m, (v.y + h) * uv_per_m)
+        uv.data[loop.index].uv = ((v.x + half) * uv_per_m, (v.y + half) * uv_per_m)
 
     obj = bpy.data.objects.new(name, me)
     obj.location = location
     (collection or ensure_collection("Ground", scene)).objects.link(obj)
 
-    mat = bpy.data.materials.get(spec["material"]["name"])
-    if mat is not None:
-        bpy.data.materials.remove(mat)
-    mat = build_material(spec)
+    mat_name = spec["material"]["name"]
+    mat = None if rebuild_material else bpy.data.materials.get(mat_name)
+    if mat is None:
+        existing = bpy.data.materials.get(mat_name)
+        if existing is not None:
+            bpy.data.materials.remove(existing)
+        mat = build_material(spec)
     me.materials.append(mat)
 
     tris = sum(len(p.vertices) - 2 for p in me.polygons)
-    uv_span = (size * uv_per_m, size * uv_per_m)
     report = {
         "name": obj.name,
         "size_m": size,
+        "grid": grid,
         "faces": len(me.polygons),
         "tris": tris,
-        "uv_span_m": uv_span,
+        "uv_span_m": (size * uv_per_m, size * uv_per_m),
         "material": mat.name,
     }
     return [obj], report

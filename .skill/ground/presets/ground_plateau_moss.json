@@ -3,7 +3,9 @@
   "seed": 20261111,
   "tile": {
     "size_m": 16.0,
-    "uv_per_m": 1.0
+    "thickness_m": 0.2,
+    "uv_per_m": 1.0,
+    "grid": 6
   },
   "material": {
     "name": "M_Ground_PlateauMoss",
@@ -42,7 +44,7 @@
       }
     },
     "litter": {
-      "weight": 0.5,
+      "weight": 0.15,
       "cluster": {
         "scale": 0.3,
         "detail": 4.0,
@@ -69,7 +71,7 @@
       }
     },
     "gravel": {
-      "weight": 0.25,
+      "weight": 0.22,
       "scale": 14.0,
       "radius": 0.36,
       "edge_scale": 30.0,
@@ -84,11 +86,11 @@
     },
     "lichen": {
       "weight": 0.25,
-      "gain": 0.75,
-      "dark": "#7d7a63",
-      "light": "#a9a487",
+      "gain": 0.5,
+      "dark": "#5e5b4a",
+      "light": "#7a7663",
       "patch": {
-        "scale": 0.55,
+        "scale": 1.2,
         "detail": 5.0,
         "roughness": 0.6,
         "distortion": 0.6

@@ -44,6 +44,7 @@
     "single_tri": false,
     "per_cluster": 1,
     "cluster_spread": 0.06,
+    "uv_island": { "size": 0.22, "rotate": true, "mirror": true },
     "attach": {
       "branch": 14,
       "twig": 22
@@ -75,11 +76,18 @@
     },
     "leaf": {
       "roughness": 0.6,
-      "deep": [0.105, 0.245, 0.034],
-      "pale": [0.195, 0.365, 0.058],
-      "midrib": 0.2,
-      "per_leaf": 6.0,
-      "bump": { "strength": 0.5, "distance_m": 0.0015 }
+      "cells": 8.0,
+      "patches": 3.0,
+      "patch_tint": 1.0,
+      "tones": {
+        "deep": [0.070, 0.170, 0.030],
+        "mid": [0.105, 0.245, 0.034],
+        "light": [0.150, 0.315, 0.050],
+        "pale": [0.195, 0.365, 0.058],
+        "tip": [0.235, 0.405, 0.080]
+      },
+      "grain": 0.05,
+      "bump": { "strength": 0.4, "distance_m": 0.0012 }
     }
   }
 }

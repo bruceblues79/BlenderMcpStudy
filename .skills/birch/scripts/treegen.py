@@ -253,10 +253,27 @@ def _leaf_outline(proto_key, scale, single_tri=False):
 
 
 def _place_leaf(verts, faces, uvs, anchor, out_dir, proto_key, scale, droop, rng,
-                single_tri=False, rands=None):
+                single_tri=False, uv_island=None):
     pts, faces_local, pt_uvs, _ = _leaf_outline(proto_key, scale, single_tri)
     if not pts:
         return 0
+
+    # 叶片 UV 岛：整片缩进 0–1 象限内的一小块，随机四分之一转 + 镜像 + 偏移，
+    # 全树共用同一套 0–1 色彩空间，靠落点不同得到多变绿
+    isl = uv_island or {}
+    isl_size = isl.get("size", 0.22) * rng.uniform(0.85, 1.15)
+    quarter = rng.randrange(4) if isl.get("rotate", True) else 0
+    ca, sa = ((1.0, 0.0), (0.0, 1.0), (-1.0, 0.0), (0.0, -1.0))[quarter]
+    mirror = -1.0 if (isl.get("mirror", True) and rng.random() < 0.5) else 1.0
+    uv_off = (rng.uniform(0.0, 1.0 - isl_size), rng.uniform(0.0, 1.0 - isl_size))
+
+    def island_uv(uv):
+        du = (uv[0] - 0.5) * mirror
+        dv = uv[1] - 0.5
+        ru = du * ca - dv * sa
+        rv = du * sa + dv * ca
+        return ((0.5 + ru) * isl_size + uv_off[0],
+                (0.5 + rv) * isl_size + uv_off[1])
 
     o = out_dir.normalized()
     azim = rng.uniform(-1.15, 1.15)
@@ -286,10 +303,8 @@ def _place_leaf(verts, faces, uvs, anchor, out_dir, proto_key, scale, droop, rng
         verts.append(anchor + o2 * p.y + side2 * p.x)
     for f in faces_local:
         faces.append((base + f[0], base + f[1], base + f[2]))
-        uvs.extend([pt_uvs[f[0]], pt_uvs[f[1]], pt_uvs[f[2]]])
-        if rands is not None:
-            # 独立的确定性哈希，绝不消耗主随机流，保证几何与加属性前完全一致
-            rands.append((((len(faces) + 1) * 2654435761) % 10007) / 10007.0)
+        uvs.extend([island_uv(pt_uvs[f[0]]), island_uv(pt_uvs[f[1]]),
+                    island_uv(pt_uvs[f[2]])])
     return len(faces_local)
 
 
@@ -322,8 +337,7 @@ def _attach_points(spec, branch_pts, twig_pts, rng, l1_count=0):
     return points
 
 
-def _new_object(name, verts, faces, uvs, collection, material, face_attr=None,
-                attr_name="leaf_rand"):
+def _new_object(name, verts, faces, uvs, collection, material):
     mesh = bpy.data.meshes.new(name)
     mesh.from_pydata([tuple(v) for v in verts], [], faces)
     mesh.validate()
@@ -334,10 +348,6 @@ def _new_object(name, verts, faces, uvs, collection, material, face_attr=None,
     for poly in mesh.polygons:
         for li in poly.loop_indices:
             layer.data[li].uv = uvs[li]
-    if face_attr is not None:
-        # 逐叶片随机数，供程序化材质打散，避免每片叶子长得一样
-        attr = mesh.attributes.new(attr_name, 'FLOAT', 'FACE')
-        attr.data.foreach_set("value", face_attr)
     collection.objects.link(obj)
     return obj
 
@@ -433,7 +443,6 @@ def build(spec, name="Tree_Birch", origin=(0.0, 0.0, 0.0), collection=None):
     attach = _attach_points(spec, branch_chains, twig_chains, rng, l1_count=l1["count"])
 
     leaf_v, leaf_f, leaf_uv = [], [], []
-    leaf_rand = []
     leaf = spec["leaf"]
     proto_cycle = list(leaf["prototypes"])
     season_factor = spec["season"]["leaf_factor"]
@@ -465,7 +474,7 @@ def build(spec, name="Tree_Birch", origin=(0.0, 0.0, 0.0), collection=None):
             droop = gravity * (1.25 if is_tip else 1.0)
             _place_leaf(leaf_v, leaf_f, leaf_uv, p + jitter, out, proto,
                         leaf["scale"] * rng.uniform(0.85, 1.15), droop, rng, single_tri,
-                        rands=leaf_rand)
+                        uv_island=leaf.get("uv_island"))
             leaf_total += 1
         ci += 1
 
@@ -474,7 +483,7 @@ def build(spec, name="Tree_Birch", origin=(0.0, 0.0, 0.0), collection=None):
         "branches": _new_object(f"{name}_Branches", branch_v, branch_f, branch_uv, collection, mat_bark),
         "twigs": _new_object(f"{name}_Twigs", twig_v, twig_f, twig_uv, collection, mat_bark),
         "leaves": _new_object(f"{name}_Leaves", leaf_v, leaf_f, leaf_uv, collection,
-                              mat_leaf, face_attr=leaf_rand),
+                              mat_leaf),
     }
     report = {
         "trunk_tri": len(trunk_f),
@@ -506,11 +515,18 @@ MATERIAL_DEFAULTS = {
     },
     "leaf": {
         "roughness": 0.6,
-        "deep": [0.105, 0.245, 0.034],
-        "pale": [0.195, 0.365, 0.058],
-        "midrib": 0.2,
-        "per_leaf": 6.0,
-        "bump": {"strength": 0.5, "distance_m": 0.0015},
+        "cells": 8.0,
+        "patches": 3.0,
+        "patch_tint": 1.0,
+        "tones": {
+            "deep": [0.070, 0.170, 0.030],
+            "mid": [0.105, 0.245, 0.034],
+            "light": [0.150, 0.315, 0.050],
+            "pale": [0.195, 0.365, 0.058],
+            "tip": [0.235, 0.405, 0.080],
+        },
+        "grain": 0.05,
+        "bump": {"strength": 0.4, "distance_m": 0.0012},
     },
 }
 
@@ -552,6 +568,20 @@ def _ramp(nt, stops, loc, label, constant=False):
     for elem, (pos, value) in zip(elems, stops):
         elem.position = pos
         elem.color = (value, value, value, 1.0)
+    return n
+
+
+def _ramp_colors(nt, stops, loc, label, constant=True):
+    n = _node(nt, "ShaderNodeValToRGB", loc, label)
+    n.color_ramp.interpolation = 'CONSTANT' if constant else 'LINEAR'
+    elems = n.color_ramp.elements
+    while len(elems) > len(stops):
+        elems.remove(elems[-1])
+    while len(elems) < len(stops):
+        elems.new(0.5)
+    for elem, (pos, rgb) in zip(elems, stops):
+        elem.position = pos
+        elem.color = (rgb[0], rgb[1], rgb[2], 1.0)
     return n
 
 
@@ -670,7 +700,7 @@ def _bark_material(mat, conf, uv_per_m):
 
 
 def _leaf_material(mat, conf):
-    """程序化叶片：深浅绿随机过渡 + 主脉压暗；逐叶片随机数打散重复。"""
+    """程序化叶片：全树共用 0–1 UV 象限，按 Voronoi 单元取多档绿；无叶脉。"""
     nt = mat.node_tree
     nt.nodes.clear()
     out = _node(nt, "ShaderNodeOutputMaterial", (1100, 0))
@@ -681,46 +711,52 @@ def _leaf_material(mat, conf):
     tc = _node(nt, "ShaderNodeTexCoord", (-1400, 0))
     uv = tc.outputs["UV"]
 
-    attr = _node(nt, "ShaderNodeAttribute", (-1400, -260))
-    attr.attribute_type = 'GEOMETRY'
-    attr.attribute_name = "leaf_rand"
-    w = _math(nt, 'MULTIPLY', attr.outputs["Fac"], conf["per_leaf"], (-1200, -260))
-    n = _noise(nt, uv, 5.0, 4.0, (-1000, 120), w=w.outputs[0], rough=0.6)
+    # 单元色：每个 Voronoi 单元一个固定随机值，经常量色带映射成绿色块
+    cell = _node(nt, "ShaderNodeTexVoronoi", (-1180, 300))
+    cell.inputs["Scale"].default_value = conf["cells"]
+    cell.inputs["Randomness"].default_value = 1.0
+    nt.links.new(uv, cell.inputs["Vector"])
+    cell_sep = _node(nt, "ShaderNodeSeparateColor", (-1000, 300))
+    nt.links.new(cell.outputs["Color"], cell_sep.inputs["Color"])
+    tones = conf["tones"]
+    block = _ramp_colors(nt, [(0.0, tones["deep"]), (0.26, tones["mid"]),
+                              (0.52, tones["light"]), (0.72, tones["pale"]),
+                              (0.88, tones["tip"])], (-810, 300), "GreenCells",
+                         constant=True)
+    nt.links.new(cell_sep.outputs["Red"], block.inputs[0])
 
-    span = _node(nt, "ShaderNodeMapRange", (-780, 120))
-    span.inputs["From Min"].default_value = 0.30
-    span.inputs["From Max"].default_value = 0.70
-    span.inputs["To Min"].default_value = 0.0
-    span.inputs["To Max"].default_value = 1.0
-    nt.links.new(n.outputs["Fac"], span.inputs["Value"])
+    # 大尺度斑块：只压暗不掺灰，避免把绿色洗成灰白
+    patch = _node(nt, "ShaderNodeTexVoronoi", (-1180, 0))
+    patch.inputs["Scale"].default_value = conf["patches"]
+    patch.inputs["Randomness"].default_value = 1.0
+    nt.links.new(uv, patch.inputs["Vector"])
+    patch_sep = _node(nt, "ShaderNodeSeparateColor", (-1000, 0))
+    nt.links.new(patch.outputs["Color"], patch_sep.inputs["Color"])
+    patch_ramp = _ramp(nt, [(0.0, 0.62), (0.42, 1.0), (0.76, 0.80)], (-810, 0),
+                       "PatchTone")
+    nt.links.new(patch_sep.outputs["Red"], patch_ramp.inputs[0])
+    patch_mul = _node(nt, "ShaderNodeMix", (-560, 200), "PatchMul")
+    patch_mul.data_type = 'RGBA'
+    patch_mul.blend_type = 'MULTIPLY'
+    for sock in patch_mul.inputs:
+        if sock.name == 'A' and sock.type == 'RGBA':
+            _feed(nt, sock, block.outputs["Color"])
+        elif sock.name == 'B' and sock.type == 'RGBA':
+            _feed(nt, sock, patch_ramp.outputs["Color"])
+    _feed(nt, patch_mul.inputs[0], conf["patch_tint"])
+    col = patch_mul
 
-    col = _mix_rgb(nt, span.outputs[0], conf["deep"], conf["pale"], (-540, 160),
-                   "LeafTone")
-
-    sep = _node(nt, "ShaderNodeSeparateXYZ", (-1200, -420))
-    nt.links.new(uv, sep.inputs["Vector"])
-    dx = _math(nt, 'SUBTRACT', sep.outputs["X"], 0.5, (-1000, -420))
-    dx = _math(nt, 'ABSOLUTE', dx.outputs[0], None, (-860, -420))
-    mid = _ramp(nt, [(0.0, 1.0), (0.018, 0.0)], (-700, -420), "Midrib")
-    nt.links.new(dx.outputs[0], mid.inputs[0])
-    shade = _math(nt, 'MULTIPLY', mid.outputs["Color"], conf["midrib"], (-540, -420))
-    col = _mix_rgb(nt, shade.outputs[0], col.outputs[2], (0.0, 0.0, 0.0), (-320, 120),
-                   "MidribDark")
-
-    # 逐叶明度抖动：让同一片树冠里的叶子不重样
-    tone = _math(nt, 'MULTIPLY', attr.outputs["Fac"], 0.35, (-540, -120))
-    col = _mix_rgb(nt, tone.outputs[0], col.outputs[2], conf["pale"], (-120, 160),
-                   "LeafVary")
+    # 细颗粒：极轻微的明度扰动，同时作为凹凸
+    grain = _noise(nt, uv, 140.0, 2.0, (-810, -260))
+    grain_s = _math(nt, 'MULTIPLY', grain.outputs["Fac"], conf["grain"], (-610, -260))
+    col = _mix_rgb(nt, grain_s.outputs[0], col.outputs[2], (0.0, 0.0, 0.0),
+                   (-340, 200), "Grain")
     nt.links.new(col.outputs[2], bsdf.inputs["Base Color"])
 
-    h = _math(nt, 'MULTIPLY', n.outputs["Fac"], 0.55, (-320, -560))
-    h = _math(nt, 'SUBTRACT', h.outputs[0],
-              _math(nt, 'MULTIPLY', mid.outputs["Color"], 0.35, (-540, -700)).outputs[0],
-              (-160, -560))
     bump = _node(nt, "ShaderNodeBump", (600, -320))
     bump.inputs["Strength"].default_value = conf["bump"]["strength"]
     bump.inputs["Distance"].default_value = conf["bump"]["distance_m"]
-    nt.links.new(h.outputs[0], bump.inputs["Height"])
+    nt.links.new(grain.outputs["Fac"], bump.inputs["Height"])
     nt.links.new(bump.outputs["Normal"], bsdf.inputs["Normal"])
     return mat
 

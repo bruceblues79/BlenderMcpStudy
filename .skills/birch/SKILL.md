@@ -89,7 +89,8 @@ objs, report = treegen.build(spec, name="Tree_Birch", collection=treegen.ensure_
 | `variation.height` | 顶层 | 每棵高度随机浮动比例（0.10 = ±10%） |
 | `variation.branch_count` | 顶层 | 每棵一级枝数量向下抖动幅度，保证不破 1000 面 |
 | `material.bark.*` | 顶层 | 树皮配方：底色 `base`、浓淡 `mottle`/`grain`、皮孔 `lenticels`、裂纹 `cracks`、`bump` |
-| `material.leaf.*` | 顶层 | 叶片配方：`deep`/`pale` 双绿、主脉压暗 `midrib`、逐叶随机强度 `per_leaf` |
+| `material.leaf.*` | 顶层 | 叶片配方：`cells` 色块密度、`patches` 大斑块、`patch_tint` 斑块混合强度、`tones` 五档绿、`grain` 颗粒、`bump` |
+| `leaf.uv_island` | 顶层 | 叶片 UV 岛：`size` 岛边长的象限占比、`rotate` 90° 整圈随机转、`mirror` 随机镜像；缺省 0.22 / true / true |
 
 实际叶面数 = `leaf_max_tri × canopy × season.leaf_factor`，脚本按此预算逐簇累加，超出前停止。
 
@@ -100,8 +101,9 @@ objs, report = treegen.build(spec, name="Tree_Birch", collection=treegen.ensure_
   - 横向皮孔：`Wave(BANDS, Y)` 造行距 → `Noise` 高频在 U 上切断成短横条 → 混向近黑
   - 纵向裂纹：`Noise` 经 `Mapping` 在 U 上放大、V 上压扁 → `abs(f-0.5) < width` 取脊线，再乘低频遮罩做成断续
   - 灰白浓淡：中频 `Noise` 调制底色，`base` 为线性 RGB
-- 叶片：4D `Noise` 取深浅绿过渡，`UV.x` 距 0.5 的距离出主脉并压暗
-- 逐叶片随机：生成时给叶片网格写入面属性 `leaf_rand`（每片一个 0–1 随机数），材质用 `Attribute` 节点同时驱动噪声 W 与明度抖动，避免每片叶子一模一样
+- 叶片 UV：每片叶的 UV 岛缩到 0–1 象限内的一小块，随机 90° 整圈旋转 + 随机镜像 + 随机偏移，全树共用同一套色彩空间
+- 叶片配色：`UV → Voronoi(cells) → SeparateColor.R → 常量插值 ColorRamp`，五档绿硬切出"色块"；再叠低频 `Voronoi(patches)` 经 `MULTIPLY` 压暗，避免浅灰混色把绿洗灰；细噪声 `grain` 做轻微明度扰动
+- 无叶脉：UV 岛随机旋转后，UV 推出的中脉线必然歪，故不生成
 - 粗糙度走常量（树皮 0.9 / 叶 0.6），凹凸由 `Bump` 从同一套高度场生成
 
 
@@ -165,4 +167,4 @@ results = treegen.spawn_variants(spec, count=5, spacing=2.4, x0=-4.8)
 - 树冠密度由预算驱动，不看真实叶面积
 - 树皮 U 为环向弧长，程序化噪声在 U 回环处有一条竖缝（已确认可接受，未做 mirror UV）
 - 程序化噪声不带 mipmap，远距离或 VR 斜视角下细皮孔可能闪烁
-- 旧树（本改动之前生成的）没有 `leaf_rand` 面属性，材质会把逐叶随机退化成常量，需要重新生成或补写属性
+- 叶片 UV 岛按象限内随机落点共用 0–1 空间，岛之间会重叠；这是刻意的，靠重叠打散重复感，不是打包图集
